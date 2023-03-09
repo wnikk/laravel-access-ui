@@ -3,6 +3,7 @@
 
 [![License](https://poser.pugx.org/wnikk/laravel-access-ui/license)](//packagist.org/packages/wnikk/laravel-access-ui)
 [![PHP Version Require](http://poser.pugx.org/wnikk/laravel-access-ui/require/php)](https://packagist.org/packages/wnikk/laravel-access-ui)
+[![Total Downloads](http://poser.pugx.org/wnikk/laravel-access-ui/downloads)](https://packagist.org/packages/wnikk/laravel-access-ui)
 [![Latest Stable Version](https://poser.pugx.org/wnikk/laravel-access-ui/v)](//packagist.org/packages/wnikk/laravel-access-ui)
 [![Latest Unstable Version](http://poser.pugx.org/wnikk/laravel-access-ui/v/unstable)](https://packagist.org/packages/wnikk/laravel-access-ui)
 
@@ -35,7 +36,7 @@ composer require wnikk/laravel-access-ui
 And publish the **config/accessUi.php** config file with:
 
 ```bash
-    php artisan vendor:publish --provider="Wnikk\LaravelAccessRules\AccessUiServiceProvider"
+php artisan vendor:publish --provider="Wnikk\LaravelAccessRules\AccessUiServiceProvider"
 ```
 
 
