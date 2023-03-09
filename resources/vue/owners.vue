@@ -107,6 +107,7 @@ export default {
                     callback(false,  msg);
                 });
         },
+
         deleteOwner: function (form, id, callback)
         {
             this.$http.delete(this.routeOwners.delete.replace(':id:', id), {context: form})
