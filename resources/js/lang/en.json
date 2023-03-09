@@ -1,0 +1,20 @@
+{
+    "rule": {
+        "create.title": "New rule",
+        "edit.guard_name": "Technical name rule",
+        "edit.options": "Validation for parameter option",
+        "edit.description": "Description",
+        "delete.attention": "The rule when removing is deactivated.\n<br/>Please make sure that the rule is not used and after finally delete it from the database."
+    },
+    "owner": {
+        "create.title": "New owner",
+        "edit.name": "Fullname owner",
+        "edit.original_id": "External ID",
+        "delete.attention": "Be careful!!!<br/>Removal of the owner completely delete his permission and inheritance!"
+    },
+    "global": {
+        "btn.save": "Save",
+        "btn.delete": "Delete",
+        "btn.cancel": "Cancel"
+    }
+}

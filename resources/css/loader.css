@@ -1,0 +1,124 @@
+
+.ajax-loader {
+    --main-color: #30D5C8;
+    --bg-color1: rgba(0, 204, 187, 0.5);
+    --bg-color2: rgba(255,255,255,0.5);
+}
+
+.ajax-progress-element {
+    width: 100%;
+    height: 100%;
+}
+#ajax-progress-base {
+    position: fixed;
+    z-index: 99999;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+}
+.ajax-progress-container {
+    background: none;
+    white-space:nowrap;
+    overflow:hidden;
+    --progress: 0%;
+}
+.ajax-progress-container:before {
+    position: absolute;
+    width: var(--progress);
+    height: 100%;
+    display: inline-block;
+    vertical-align: middle;
+    content: '';
+    background-color: var(--bg-color1);
+    transition: width 0.2s ease-in-out;
+    border-radius: 0 0.5rem 0.5rem 0;
+}
+.ajax-progress-container progress {
+    width: 100%;
+    opacity: 0;
+}
+.ajax-loader-element {
+    position: absolute;
+    z-index: 99999;
+    min-width: 48px;
+    min-height: 48px;
+    white-space: nowrap;
+    text-align: center;
+    border-radius: 10px;
+    background-color: var(--bg-color2);
+    border: 1px solid var(--main-color);
+    margin: 0;
+}
+.ajax-loader-element:before {
+    height: 100%;
+    display: inline-block;
+    vertical-align: middle;
+    content: '';
+}
+.ajax-loader-element .ajax-loader-container {
+    display: inline-block;
+    white-space: normal;
+    vertical-align: middle;
+    text-align: left;
+    max-width: 64px;
+    max-height: 64px;
+}
+.ajax-loader-element .ajax-loader-container {
+    position: relative;
+    margin: 0 auto;
+    max-width: 64px;
+    max-height: 64px;
+    min-width: 48px;
+    min-height: 48px;
+    width: 100%;
+    height: 100%;
+}
+.ajax-loader-element > progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+}
+.ajax-loader-element .ajax-circular {
+    animation: ajax-rotate 2s linear infinite;
+    height: 100%;
+    transform-origin: center center;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+}
+
+.ajax-loader-element .ajax-circular > .path {
+    stroke-dasharray: 1,200;
+    stroke-dashoffset: 0;
+    -webkit-animation: ajax-dash 1.5s ease-in-out infinite;
+    animation: ajax-dash 1.5s ease-in-out infinite;
+    stroke-linecap: round;
+    stroke: var(--main-color);
+}
+
+@keyframes ajax-rotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+@keyframes ajax-dash {
+    0% {
+        stroke-dasharray: 1,200;
+        stroke-dashoffset: 0;
+    }
+    50% {
+        stroke-dasharray: 89,200;
+        stroke-dashoffset: -35;
+    }
+    100% {
+        stroke-dasharray: 89,200;
+        stroke-dashoffset: -124;
+    }
+}

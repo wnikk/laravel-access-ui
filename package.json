@@ -1,0 +1,41 @@
+{
+    "name": "laravel-access-ui",
+    "version": "1.0.0",
+    "description": "User Interface for simple access rights.",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview"
+    },
+    "homepage": "https://github.com/wnikk/laravel-access-ui",
+    "keywords": [
+        "Access User Interface",
+        "Vue"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/wnikk/laravel-access-ui.git"
+    },
+    "author": {
+        "name": "Nikolya May",
+        "homepage": "https://nikk.dev",
+        "role": "Developer"
+    },
+    "license": "MIT",
+    "devDependencies": {
+        "@vitejs/plugin-vue": "^4.0.0",
+        "lodash": "^4.17.19",
+        "postcss": "^8.4.16",
+        "vite": "^4.0.2",
+        "vite-plugin-resolve": "^2.3.0"
+    },
+    "dependencies": {
+        "tiny-emitter": "^2.1.0",
+        "vue": "^3.2.5",
+        "vue-i18n": "^9.2.2",
+        "vue-multiselect": "^3.0.0-beta.1"
+    }
+}

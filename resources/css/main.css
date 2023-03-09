@@ -1,0 +1,229 @@
+
+.accessUi {
+    --text-main-color: #222222;
+    --text-bg-color: white;
+    --text-silver-color: silver;
+    --border-main: #eeeeee;
+    --border-hover: silver;
+
+    --btn-main-bg: silver;
+    --btn-main-bg-hover: #999999;
+
+    --inp-label: #555555;
+
+    --btn-primary-bg: #3f6ad8;
+    --btn-primary-bg-hover: #003eaa;
+    --btn-primary-text: #eeeeee;
+
+    --alert-success-bg: #d8f3e5;
+    --alert-success-text: #1e6641;
+    --alert-warning-bg: #fdf1d3;
+    --alert-warning-text: #806013;
+}
+
+.accessUi .fade-enter-active,
+.accessUi .fade-leave-active {
+    transition: opacity 0.5s ease;
+}
+
+.accessUi .fade-enter-from,
+.accessUi .fade-leave-to {
+    opacity: 0;
+}
+
+.accessUi .alert {
+    padding: 1rem;
+    border-radius: 5px;
+}
+
+.accessUi .alert-success {
+    color: var(--alert-success-text);
+    background-color: var(--alert-success-bg);
+}
+.accessUi .alert-warning {
+    color: var(--alert-warning-text);
+    background-color: var(--alert-warning-bg);
+}
+
+.accessUi-rules-list,
+.accessUi-owners-list {
+    color: var(--text-main-color);
+}
+
+.accessUi-rules-list .list,
+.accessUi-owners-list .list {
+    list-style-type: none;
+    column-count: 3;
+    margin: 0;
+    padding: 0;
+}
+
+.accessUi-rules-list .list > .rule-item,
+.accessUi-owners-list .list > .owner-item {
+    display: inline-block;
+    vertical-align: top;
+    width: 98%;
+    margin-bottom: 1rem;
+}
+.accessUi-rules-list .rule-item details,
+.accessUi-owners-list .owner-item details,
+.accessUi-owners-list .owner-item article {
+    max-width: 400px;
+    width: 95%;
+    padding: 1rem;
+    border-radius: 7px;
+    position: relative;
+    box-shadow: 0 20px 27px 0 rgba(0,0,0,.05);
+    margin-bottom: 1rem;
+}
+.accessUi-owners-list .owner-item article {
+    padding-bottom: 2rem;
+}
+
+.accessUi-rules-list .rule-item summary,
+.accessUi-owners-list .owner-item summary,
+.accessUi-owners-list .owner-item h4 {
+    margin: -1rem;
+    padding: 1rem 110px 1rem 1rem;
+    border-radius: 7px;
+    background-color: var(--text-bg-color);
+    box-shadow: 0 20px 27px 0 rgba(0,0,0,.05);
+}
+.accessUi-rules-list .rule-item article {
+    margin-top: 2rem;
+}
+.accessUi-rules-list .rule-item article p {
+    margin: 1rem 0;
+}
+.accessUi-rules-list .rule-item .options {
+    color: var(--text-silver-color);
+    font-size: small;
+}
+.accessUi-rules-list .rule-item time,
+.accessUi-owners-list .owner-item time {
+    color: var(--text-silver-color);
+    float: right;
+    font-size: x-small;
+}
+
+.accessUi-owners-list .owner-item .type {
+    position: absolute;
+    bottom: 5px;
+    left: 1rem;
+    color: var(--text-silver-color);
+}
+.accessUi-owners-list .owner-item time {
+    position: absolute;
+    bottom: 5px;
+    right: 1rem;
+}
+.accessUi-owners-list .owner-item h4 .original_id {
+    float: right;
+    color: var(--text-silver-color);
+    font-weight: normal;
+}
+
+.accessUi-rules-list > fieldset,
+.accessUi-owners-list > fieldset {
+    border: none;
+}
+.accessUi-rules-list .rule-item .info fieldset,
+.accessUi-owners-list .owner-item .info fieldset {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    padding: 10px 0;
+    border: none;
+    text-align: right;
+}
+.accessUi-rules-list .rule-item .list-child {
+    list-style-type: none;
+    margin: 0;
+    padding: 0 0 0 1.5rem;
+}
+.accessUi-rules-list .icon,
+.accessUi-owners-list .icon {
+    height: 24px;
+    width: 44px;
+    border: 1px solid var(--border-main);
+    border-radius: 5px;
+    margin-right: 5px;
+    background-color: transparent;
+}
+.accessUi-rules-list .icon:hover,
+.accessUi-owners-list .icon:hover {
+    cursor: pointer;
+    border: 1px solid var(--border-hover);
+}
+.accessUi-rules-list .icon:active,
+.accessUi-owners-list .icon:active {
+    border: 1px solid var(--border-hover);
+    background-color: var(--border-main);
+}
+.accessUi-rules-list form,
+.accessUi-owners-list form {
+    padding: 1rem;
+    margin: 1rem 0 -1rem;
+}
+.accessUi-rules-list form fieldset,
+.accessUi-owners-list form fieldset {
+    border: none;
+    padding: 0;
+    margin: 1rem 0;
+}
+.accessUi-rules-list .edit form label,
+.accessUi-owners-list .edit form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--inp-label);
+    font-size: 0.8rem;
+}
+.accessUi-rules-list form input,
+.accessUi-rules-list form textarea,
+.accessUi-rules-list form button,
+.accessUi-owners-list form input,
+.accessUi-owners-list form textarea,
+.accessUi-owners-list form select,
+.accessUi-owners-list form button {
+    padding: 0.5rem;
+    border-radius: 5px;
+    display: block;
+    border: 1px solid var(--border-hover);
+    width: calc(100% - 1rem);
+    font-size: .9rem;
+}
+.accessUi-rules-list form .btn,
+.accessUi-owners-list form .btn {
+    display: inline-block;
+    width: 35%;
+    background-color: var(--btn-main-bg);
+}
+.accessUi-rules-list form .btn:hover,
+.accessUi-rules-list form .btn:active,
+.accessUi-owners-list form .btn:hover,
+.accessUi-owners-list form .btn:active {
+    background-color: var(--btn-main-bg-hover);
+}
+
+.accessUi-rules-list form .btn-save,
+.accessUi-owners-list form .btn-save {
+    width: 55%;
+    margin-right: 10%;
+    background-color: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
+}
+.accessUi-rules-list form .btn-save:hover,
+.accessUi-rules-list form .btn-save:active,
+.accessUi-owners-list form .btn-save:hover,
+.accessUi-owners-list form .btn-save:active {
+    background-color: var(--btn-primary-bg-hover);
+}
+
+.accessUi-rules-list form .btn:disabled,
+.accessUi-owners-list form .btn:disabled {
+    background-color: var(--btn-main-bg);
+    color: var(--btn-main-bg-hover);
+}
+
+
