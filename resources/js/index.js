@@ -8,6 +8,7 @@ import localeEng from './lang/en.json'
 
 import Rules from '@/rules.vue';
 import Owners from '@/owners.vue';
+import Inherit from '@/inherit.vue';
 import './../css/icon.css';
 import './../css/main.css';
 import 'vue-multiselect/dist/vue3-multiselect.css';
@@ -35,9 +36,15 @@ import 'vue-multiselect/dist/vue3-multiselect.css';
                 update: null,// '/owners.php?save=%id%',
                 delete: null,// '/owners.php?delete=%id%',
             },
+            inheritRules: {
+                list:   null,// '/inherit.php?list',
+                create: null,// '/inherit.php?add',
+                delete: null,// '/inherit.php?delete=%id%',
+            },
             components: {
                 rules:  Rules,
                 owners: Owners,
+                inherit: Inherit,
             },
         };
 

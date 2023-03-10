@@ -45,13 +45,11 @@
     background-color: var(--alert-warning-bg);
 }
 
-.accessUi-rules-list,
-.accessUi-owners-list {
+.accessUi {
     color: var(--text-main-color);
 }
 
-.accessUi-rules-list .list,
-.accessUi-owners-list .list {
+.accessUi .list {
     list-style-type: none;
     column-count: 3;
     margin: 0;
@@ -59,7 +57,8 @@
 }
 
 .accessUi-rules-list .list > .rule-item,
-.accessUi-owners-list .list > .owner-item {
+.accessUi-owners-list .list > .owner-item,
+.accessUi-inherits-list .list > .inherit-item {
     display: inline-block;
     vertical-align: top;
     width: 98%;
@@ -67,7 +66,9 @@
 }
 .accessUi-rules-list .rule-item details,
 .accessUi-owners-list .owner-item details,
-.accessUi-owners-list .owner-item article {
+.accessUi-owners-list .owner-item article,
+.accessUi-inherits-list .inherit-item details,
+.accessUi-inherits-list .inherit-item article {
     max-width: 400px;
     width: 95%;
     padding: 1rem;
@@ -76,13 +77,16 @@
     box-shadow: 0 20px 27px 0 rgba(0,0,0,.05);
     margin-bottom: 1rem;
 }
-.accessUi-owners-list .owner-item article {
+.accessUi-owners-list .owner-item article,
+.accessUi-inherits-list .inherit-item article {
     padding-bottom: 2rem;
 }
 
 .accessUi-rules-list .rule-item summary,
 .accessUi-owners-list .owner-item summary,
-.accessUi-owners-list .owner-item h4 {
+.accessUi-owners-list .owner-item h4,
+.accessUi-inherits-list .inherit-item summary,
+.accessUi-inherits-list .inherit-item h4 {
     margin: -1rem;
     padding: 1rem 110px 1rem 1rem;
     border-radius: 7px;
@@ -100,35 +104,41 @@
     font-size: small;
 }
 .accessUi-rules-list .rule-item time,
-.accessUi-owners-list .owner-item time {
+.accessUi-owners-list .owner-item time,
+.accessUi-inherits-list .inherit-item time {
     color: var(--text-silver-color);
     float: right;
     font-size: x-small;
 }
 
-.accessUi-owners-list .owner-item .type {
+.accessUi-owners-list .owner-item .type,
+.accessUi-inherits-list .inherit-item .type {
     position: absolute;
     bottom: 5px;
     left: 1rem;
     color: var(--text-silver-color);
 }
-.accessUi-owners-list .owner-item time {
+.accessUi-owners-list .owner-item time,
+.accessUi-inherits-list .inherit-item time {
     position: absolute;
     bottom: 5px;
     right: 1rem;
 }
-.accessUi-owners-list .owner-item h4 .original_id {
+.accessUi-owners-list .owner-item h4 .original_id,
+.accessUi-inherits-list .inherit-item h4 .original_id {
     float: right;
     color: var(--text-silver-color);
     font-weight: normal;
 }
 
 .accessUi-rules-list > fieldset,
-.accessUi-owners-list > fieldset {
+.accessUi-owners-list > fieldset,
+.accessUi-inherits-list > fieldset {
     border: none;
 }
 .accessUi-rules-list .rule-item .info fieldset,
-.accessUi-owners-list .owner-item .info fieldset {
+.accessUi-owners-list .owner-item .info fieldset,
+.accessUi-inherits-list .inherit-item .info fieldset {
     position: absolute;
     top: 0;
     right: 0;
@@ -143,7 +153,8 @@
     padding: 0 0 0 1.5rem;
 }
 .accessUi-rules-list .icon,
-.accessUi-owners-list .icon {
+.accessUi-owners-list .icon,
+.accessUi-inherits-list .icon {
     height: 24px;
     width: 44px;
     border: 1px solid var(--border-main);
@@ -151,23 +162,30 @@
     margin-right: 5px;
     background-color: transparent;
 }
+.accessUi-inherits-list .icon {
+    display: inline-block;
+}
 .accessUi-rules-list .icon:hover,
-.accessUi-owners-list .icon:hover {
+.accessUi-owners-list .icon:hover,
+.accessUi-inherits-list .icon:hover {
     cursor: pointer;
     border: 1px solid var(--border-hover);
 }
 .accessUi-rules-list .icon:active,
-.accessUi-owners-list .icon:active {
+.accessUi-owners-list .icon:active,
+.accessUi-inherits-list .icon:active {
     border: 1px solid var(--border-hover);
     background-color: var(--border-main);
 }
 .accessUi-rules-list form,
-.accessUi-owners-list form {
+.accessUi-owners-list form,
+.accessUi-inherits-list .edit form {
     padding: 1rem;
     margin: 1rem 0 -1rem;
 }
 .accessUi-rules-list form fieldset,
-.accessUi-owners-list form fieldset {
+.accessUi-owners-list form fieldset,
+.accessUi-inherits-list form fieldset {
     border: none;
     padding: 0;
     margin: 1rem 0;
@@ -179,13 +197,10 @@
     color: var(--inp-label);
     font-size: 0.8rem;
 }
-.accessUi-rules-list form input,
-.accessUi-rules-list form textarea,
-.accessUi-rules-list form button,
-.accessUi-owners-list form input,
-.accessUi-owners-list form textarea,
-.accessUi-owners-list form select,
-.accessUi-owners-list form button {
+.accessUi form input,
+.accessUi form textarea,
+.accessUi form button,
+.accessUi form select {
     padding: 0.5rem;
     border-radius: 5px;
     display: block;
@@ -193,35 +208,28 @@
     width: calc(100% - 1rem);
     font-size: .9rem;
 }
-.accessUi-rules-list form .btn,
-.accessUi-owners-list form .btn {
+.accessUi form .btn {
     display: inline-block;
     width: 35%;
     background-color: var(--btn-main-bg);
 }
-.accessUi-rules-list form .btn:hover,
-.accessUi-rules-list form .btn:active,
-.accessUi-owners-list form .btn:hover,
-.accessUi-owners-list form .btn:active {
+.accessUi form .btn:hover,
+.accessUi form .btn:active {
     background-color: var(--btn-main-bg-hover);
 }
 
-.accessUi-rules-list form .btn-save,
-.accessUi-owners-list form .btn-save {
+.accessUi form .btn-save {
     width: 55%;
     margin-right: 10%;
     background-color: var(--btn-primary-bg);
     color: var(--btn-primary-text);
 }
-.accessUi-rules-list form .btn-save:hover,
-.accessUi-rules-list form .btn-save:active,
-.accessUi-owners-list form .btn-save:hover,
-.accessUi-owners-list form .btn-save:active {
+.accessUi form .btn-save:hover,
+.accessUi form .btn-save:active {
     background-color: var(--btn-primary-bg-hover);
 }
 
-.accessUi-rules-list form .btn:disabled,
-.accessUi-owners-list form .btn:disabled {
+.accessUi form .btn:disabled {
     background-color: var(--btn-main-bg);
     color: var(--btn-main-bg-hover);
 }

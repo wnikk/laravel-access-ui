@@ -37,4 +37,18 @@ class AccessUiController
             'delete' => $accept?route('accessUi.owners-data.destroy', ':id:'):null,
         ]]);
     }
+
+    /**
+     * @return \Illuminate\Contracts\View\View
+     */
+    public function inherit($owner)
+    {
+        $accept = config('accessUi.grid_inherit');
+
+        return View::make('accessUi::inherit', ['routes' => [
+            'list'   => route('accessUi.owner.inherit-data.index', ['owner' => $owner]),
+            'create' => $accept?route('accessUi.owner.inherit-data.store', ['owner' => $owner]):null,
+            'delete' => $accept?route('accessUi.owner.inherit-data.destroy', ['id' => ':id:', 'owner' => $owner]):null,
+        ]]);
+    }
 }

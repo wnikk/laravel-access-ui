@@ -52,4 +52,11 @@ return [
      * Enable/Disable the possibility to create/update/delete owners from the panel.
      */
     'grid_owners' => true,
+
+    /**
+     * Enable view inheritance
+     *
+     * Enable/Disable the possibility to create/update/delete inheritance from the panel.
+     */
+    'grid_inherit' => true,
 ];

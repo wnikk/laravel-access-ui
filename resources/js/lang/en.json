@@ -12,7 +12,13 @@
         "edit.original_id": "External ID",
         "delete.attention": "Be careful!!!<br/>Removal of the owner completely delete his permission and inheritance!"
     },
+    "inherit": {
+        "create.title": "New inherit",
+        "create.owners": "Owner"
+    },
     "global": {
+        "inp.select": "Type to search",
+        "inp.select.noResult": "Oops! No elements found. Consider changing the search query.",
         "btn.save": "Save",
         "btn.delete": "Delete",
         "btn.cancel": "Cancel"

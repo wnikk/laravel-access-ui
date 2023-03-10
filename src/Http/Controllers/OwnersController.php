@@ -25,7 +25,7 @@ class OwnersController extends Controller
             'success' => true,
             'list'    => $owner::where([$type?['type', $type]:['id', '>', '0']])->get([
                 'id', 'type', 'created_at',
-                'original_id', 'name',
+                'name', 'original_id',
             ])->toArray(),
             'types' => array_map('basename', $owner->getListTypes()),
         ];
