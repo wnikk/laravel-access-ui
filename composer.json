@@ -1,6 +1,6 @@
 {
     "name": "wnikk/laravel-access-ui",
-    "version": "0.8.3",
+    "version": "0.8.4",
     "description": "Interface of simple system access rights for Laravel.",
     "license": "MIT",
     "keywords": [
@@ -32,7 +32,7 @@
     "require": {
         "php": ">=7.4",
         "illuminate/auth": "^8.0|^9.0|^10.0",
-        "illuminate/container": "^^8.0|^9.0|^10.0",
+        "illuminate/container": "^8.0|^9.0|^10.0",
         "illuminate/contracts": "^8.0|^9.0|^10.0",
         "illuminate/database": "^8.0|^9.0|^10.0",
         "illuminate/console": "^8.0|^9.0|^10.0",
