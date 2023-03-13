@@ -11,16 +11,54 @@ use Wnikk\LaravelAccessRules\Contracts\Inheritance as InheritanceContract;
 class InheritController extends Controller
 {
     /**
+     * Object of OwnerContract
+     *
+     * @var OwnerContract
+     */
+    protected $owner;
+
+    /**
+     * Set owner
+     *
+     * @return void
+     */
+    public function setOwner(OwnerContract $owner)
+    {
+        $this->owner = $owner;
+    }
+
+    /**
+     * Set owner form Request
+     *
+     * @return void
+     */
+    public function setOwnerFromRequest(Request $request)
+    {
+        $request->merge([
+            'owner' => $request->route('owner')
+        ]);
+
+        $request->validate([
+            'owner' => 'required|integer',
+        ]);
+
+        $this->setOwner(
+            $this->owner::findOrFail($request->owner)
+        );
+    }
+
+    /**
      * Return all inherit
      *
-     * @param $owner
-     * @param OwnerContract $ownerContract
+     * @param Request $request
      * @return array
      */
-    public function index($owner, OwnerContract $ownerContract)
+    public function index(Request $request)
     {
+        if (!$this->owner->getKey()) $this->setOwnerFromRequest($request);
+
         /** @var InheritanceContract */
-        $inherit = $ownerContract::findOrFail($owner)
+        $inherit = $this->owner
             ->inheritance()
             ->with('ownerParent')
             ->get();
@@ -38,7 +76,7 @@ class InheritController extends Controller
             ];
         }
 
-        $owners = $ownerContract::where('id', '!=', $owner)->get([
+        $owners = $this->owner::where('id', '!=', $this->owner->getKey())->get([
             'id', 'type',
             'name', 'original_id',
         ])->toArray();
@@ -47,7 +85,7 @@ class InheritController extends Controller
             'success' => true,
             'list'    => $list,
             'owners'  => $owners,
-            'types'   => array_map('basename', $ownerContract->getListTypes()),
+            'types'   => array_map('basename', $this->owner->getListTypes()),
         ];
     }
 
@@ -63,47 +101,56 @@ class InheritController extends Controller
         if (!in_array($method, ['index']) && !config('accessUi.grid_inherit')){
             abort(403);
         }
+
+        if (!$this->owner) {
+            $this->setOwner(app(OwnerContract::class));
+        }
+
         return parent::callAction($method, $parameters);
     }
 
     /**
      * Create inherit
      *
-     * @param int $owner
      * @param Request $request
-     * @param OwnerContract $ownerContract
      * @return array
      */
-    public function store($owner, Request $request, OwnerContract $ownerContract)
+    public function store(Request $request)
     {
+        if (!$this->owner->getKey()) $this->setOwnerFromRequest($request);
+
         $request->validate([
             'owner_id' => 'required|integer',
         ]);
 
-        $owner  = $ownerContract::findOrFail($owner);
-        $parent = $ownerContract::findOrFail($request->owner_id);
+        $parent = $this->owner::findOrFail($request->owner_id);
 
         return [
-            'success' => $owner->addInheritance($parent),
+            'success' => $this->owner->addInheritance($parent),
         ];
     }
 
     /**
      * Delete inherit
      *
-     * @param $owner
-     * @param $id
-     * @param OwnerContract $ownerContract
+     * @param Request $request
      * @return array
      */
-    public function destroy($owner, $id, OwnerContract $ownerContract)
+    public function destroy(Request $request)
     {
+        if (!$this->owner->getKey()) $this->setOwnerFromRequest($request);
 
-        $owner  = $ownerContract::findOrFail($owner);
-        $parent = $ownerContract::findOrFail($id);
+        $request->merge([
+            'id' => $request->route('id')
+        ]);
+        $request->validate([
+            'id' => 'required|integer',
+        ]);
+
+        $parent = $this->owner::findOrFail($request->id);
 
         return [
-            'success' => $owner->remInheritance($parent),
+            'success' => $this->owner->remInheritance($parent),
         ];
     }
 }

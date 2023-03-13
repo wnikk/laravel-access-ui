@@ -8,6 +8,7 @@
     },
     "owner": {
         "create.title": "New owner",
+        "edit.type": "Type of owner",
         "edit.name": "Fullname owner",
         "edit.original_id": "External ID",
         "delete.attention": "Be careful!!!<br/>Removal of the owner completely delete his permission and inheritance!"

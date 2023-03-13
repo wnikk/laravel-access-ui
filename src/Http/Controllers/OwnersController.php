@@ -10,24 +10,58 @@ use Wnikk\LaravelAccessRules\Contracts\Owner as OwnerContract;
 class OwnersController extends Controller
 {
     /**
+     * Object of OwnerContract
+     *
+     * @var OwnerContract
+     */
+    protected $owner;
+
+    /**
+     * List of all accompanied types of owners
+     *
+     * @var array <int, string>
+     */
+    protected $supportTypes = [];
+
+    /**
+     * Establishes a list of all accompanied types of owners
+     *
+     * @return void
+     */
+    public function setSupportTypes(array $types)
+    {
+        $this->supportTypes = $types?array_map('strval', $types):[];
+    }
+
+    /**
      * Return all or selected type owner
      *
      * @param Request $request
-     * @param OwnerContract $owner
      * @return array
      */
-    public function index(Request $request, OwnerContract $owner)
+    public function index(Request $request)
     {
         $type = $request->type;
-        $type = (!$type||$type==='all')?null:$owner->getTypeID($type);
+        $type = (!$type||$type==='all')?null:$this->owner->getTypeID($type);
+
+        if (!$this->supportTypes) abort(403, 'Empty supportTypes');
+
+        if (!$type) {
+            $select = $this->owner::whereIn('type', array_keys($this->supportTypes));
+        } else {
+            if (!in_array($type, array_keys($this->supportTypes))) abort(403, 'Type of owner not find in supportTypes');
+
+            $select = $this->owner::where('type', $type);
+        }
 
         return [
             'success' => true,
-            'list'    => $owner::where([$type?['type', $type]:['id', '>', '0']])->get([
-                'id', 'type', 'created_at',
-                'name', 'original_id',
-            ])->toArray(),
-            'types' => array_map('basename', $owner->getListTypes()),
+            'list'    => $select
+                ->get([
+                    'id', 'type', 'created_at',
+                    'name', 'original_id',
+                ])->toArray(),
+            'types' => array_map('basename', $this->supportTypes),
         ];
     }
 
@@ -44,6 +78,11 @@ class OwnersController extends Controller
             abort(403);
         }
 
+        $this->owner = app(OwnerContract::class);
+        if (!$this->supportTypes) {
+            $this->setSupportTypes($this->owner->getListTypes());
+        }
+
         return parent::callAction($method, $parameters);
     }
 
@@ -51,19 +90,18 @@ class OwnersController extends Controller
      *  Save new owner
      *
      * @param Request $request
-     * @param OwnerContract $owner
      * @return array
      */
-    public function store(Request $request, OwnerContract $owner)
+    public function store(Request $request)
     {
         $request->validate([
-            'type'        => 'required|integer|in:'.implode(',', array_keys($owner->getListTypes())),
+            'type'        => 'required|integer|in:'.implode(',', array_keys($this->supportTypes)),
             'original_id' => 'nullable',
             'name'        => 'nullable|string',
         ]);
-        $type = $owner->getTypeID($request->type);
+        $type = $this->owner->getTypeID($request->type);
 
-        $check = $owner->where('type', $type)
+        $check = $this->owner->where('type', $type)
             ->where('original_id', $request->original_id)
             ->first();
 
@@ -72,7 +110,7 @@ class OwnersController extends Controller
             'message' => 'This owner already exists.',
         ];
 
-        $owner = $owner::create(
+        $owner = $this->owner::create(
             $request->only(['type', 'original_id', 'name'])
         );
 
@@ -85,10 +123,9 @@ class OwnersController extends Controller
      * Update owner name
      *
      * @param Request $request
-     * @param OwnerContract $owner
      * @return array
      */
-    public function update(Request $request, OwnerContract $owner)
+    public function update(Request $request)
     {
         $request->validate([
             'id'   => 'required|integer',
@@ -96,7 +133,7 @@ class OwnersController extends Controller
             'original_id' => 'nullable',
         ]);
 
-        $owner = $owner::findOrFail($request->id);
+        $owner = $this->owner::findOrFail($request->id);
 
         $owner->update(
             $request->only(['name', 'original_id'])
@@ -110,13 +147,18 @@ class OwnersController extends Controller
     /**
      * Delete owner
      *
-     * @param $id
-     * @param OwnerContract $owner
+     * @param Request $request
      * @return array
      */
-    public function destroy($id, OwnerContract $owner)
+    public function destroy(Request $request)
     {
-        $owner = $owner::findOrFail($id);
+        $request->merge(['id' => $request->route('id')]);
+        $request->validate([
+            'id' => 'required|integer',
+        ]);
+
+        $owner = $this->owner::findOrFail($request->id);
+
 
         $relation = [
             'inheritance' => $owner->inheritance()->delete(),

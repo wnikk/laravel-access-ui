@@ -78,6 +78,7 @@ class RulesController extends Controller
      */
     public function update(Request $request, RuleContract $rule)
     {
+        $request->merge(['id' => $request->route('id')]);
         $request->validate([
             'id'          => 'required|integer',
             'guard_name'  => 'required|string|unique:'.$rule->getTable().',guard_name,'.$request->id.',id',
@@ -100,13 +101,18 @@ class RulesController extends Controller
     /**
      * Soft-delete rule
      *
-     * @param $id
+     * @param Request $request
      * @param RuleContract $rule
      * @return array
      */
-    public function destroy($id, RuleContract $rule)
+    public function destroy(Request $request, RuleContract $rule)
     {
-        $rule = $rule::findOrFail($id);
+        $request->merge(['id' => $request->route('id')]);
+        $request->validate([
+            'id' => 'required|integer',
+        ]);
+
+        $rule = $rule::findOrFail($request->id);
 
         return [
             'success' => !!$rule->delete(),
