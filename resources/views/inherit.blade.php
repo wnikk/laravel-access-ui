@@ -7,7 +7,7 @@
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu:regular,bold">
+    <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Ubuntu:regular,bold">
     <style>
         body {font-family: Ubuntu, roman, serif;}
     </style>
