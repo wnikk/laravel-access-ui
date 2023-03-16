@@ -57,11 +57,12 @@ class RulesController extends Controller
             'guard_name'  => 'required|string|unique:'.$rule->getTable().',guard_name',
             'parent_id'   => 'nullable|integer',
             'options'     => 'nullable|string',
+            'title'       => 'nullable|string',
             'description' => 'nullable|string',
         ]);
 
         $rule = $rule::create(
-            $request->only(['parent_id', 'guard_name', 'options', 'description'])
+            $request->only(['parent_id', 'guard_name', 'options', 'title', 'description'])
         );
 
         return [
@@ -84,13 +85,14 @@ class RulesController extends Controller
             'guard_name'  => 'required|string|unique:'.$rule->getTable().',guard_name,'.$request->id.',id',
             'parent_id'   => 'nullable|integer',
             'options'     => 'nullable|string',
+            'title'       => 'nullable|string',
             'description' => 'nullable|string',
         ]);
 
         $rule = $rule::findOrFail($request->id);
 
         $rule->update(
-            $request->only(['parent_id', 'guard_name', 'options', 'description'])
+            $request->only(['parent_id', 'guard_name', 'options', 'title', 'description'])
         );
 
         return [
