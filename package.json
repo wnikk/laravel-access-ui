@@ -1,6 +1,6 @@
 {
     "name": "laravel-access-ui",
-    "version": "1.0.0",
+    "version": "1.0.1-rc.2",
     "description": "User Interface for simple access rights.",
     "files": [
         "dist"
