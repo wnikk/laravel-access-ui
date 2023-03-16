@@ -32,6 +32,7 @@
 import Rule from '@/elements/rule.vue'
 import RuleEdit from '@/elements/ruleEdit.vue'
 import Alert from '@/elements/alert.vue'
+import helper from './../js/libs/helper'
 
 export default {
     name: "RulesList",
@@ -144,6 +145,7 @@ export default {
                             parent_id: item.parent_id?item.parent_id:0,
                             guard_name: item.guard_name?item.guard_name:null,
                             options: item.options?item.options:null,
+                            title: item.title?item.title:null,
                             description: item.description?item.description:null,
                             created_at: item.created_at?item.created_at:null,
                         });
@@ -188,29 +190,7 @@ export default {
             this.updateListToTree();
         },
         updateListToTree: function () {
-            this.rulesTree = this.createDataTree(this.rulesList);
-        },
-        createDataTree: (dataset, options) => {
-            options = options || {};
-            let ID_KEY = options.idKey || 'id';
-            let PARENT_KEY = options.parentKey || 'parent_id';
-            let CHILDREN_KEY = options.childrenKey || 'children';
-            const hashTable = Object.create(null);
-            dataset.forEach(
-                aData => {
-                    hashTable[aData[ID_KEY]] = {...aData};
-                    hashTable[aData[ID_KEY]][CHILDREN_KEY] = [];
-                }
-            );
-            const dataTree = [];
-            dataset.forEach(aData => {
-                if(aData[PARENT_KEY] && hashTable[aData[PARENT_KEY]]){
-                    hashTable[aData[PARENT_KEY]][CHILDREN_KEY].push(hashTable[aData[ID_KEY]]);
-                } else{
-                    dataTree.push(hashTable[aData[ID_KEY]]);
-                }
-            });
-            return dataTree;
+            this.rulesTree = helper.createDataTree(this.rulesList);
         },
     },
     created() {

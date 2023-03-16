@@ -10,13 +10,14 @@
         ></ruleDelete>
 
         <details v-if="displayInfo" :open=rule.opened class="info">
-            <summary>{{ rule.guard_name }}</summary>
+            <summary>{{ rule.title??rule.guard_name }}</summary>
             <fieldset v-if="availableEdit || availableDelete">
                 <button v-if=availableEdit class="icon icon-edit" @click="editRule($event)"></button>
                 <button v-if=availableDelete class="icon icon-delete" @click="deleteRule($event)"></button>
             </fieldset>
             <article>
                 <p class="description">{{ rule.description }}</p>
+                <p class="options">{{ rule.guard_name }}</p>
                 <p v-if="rule.options" class="options">{{ rule.options }}</p>
                 <time>{{ rule.created_at }}</time>
             </article>

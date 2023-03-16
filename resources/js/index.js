@@ -1,4 +1,3 @@
-
 import * as Vue from 'vue';
 import emitter from 'tiny-emitter/instance'
 import helper from './libs/helper'
@@ -8,11 +7,18 @@ import localeEng from './lang/en.json'
 
 import Rules from '@/rules.vue';
 import Owners from '@/owners.vue';
-import Inherit from '@/inherit.vue';
+import Inherit from '@/inherits.vue';
+import Permission from '@/permissions.vue';
+
 import './../css/icon.css';
 import './../css/main.css';
 import 'vue-multiselect/dist/vue3-multiselect.css';
 
+/*!
+ * Laravel-access-ui (theme:ukit) v1.0.0
+ * (c) 2023 Nikolya May
+ * Released under the MIT License.
+ */
 
 (function( window, document, undefined ) {
 
@@ -27,24 +33,29 @@ import 'vue-multiselect/dist/vue3-multiselect.css';
             routeRules: {
                 list:   null,// '/rules.php?list',
                 create: null,// '/rules.php?add',
-                update: null,// '/rules.php?save=%id%',
-                delete: null,// '/rules.php?delete=%id%',
+                update: null,// '/rules.php?save=:id:',
+                delete: null,// '/rules.php?delete=:id:',
             },
             routeOwners: {
                 list:   null,// '/owners.php?list',
                 create: null,// '/owners.php?add',
-                update: null,// '/owners.php?save=%id%',
-                delete: null,// '/owners.php?delete=%id%',
+                update: null,// '/owners.php?save=:id:',
+                delete: null,// '/owners.php?delete=:id:',
             },
-            inheritRules: {
+            routeInherit: {
                 list:   null,// '/inherit.php?list',
                 create: null,// '/inherit.php?add',
-                delete: null,// '/inherit.php?delete=%id%',
+                delete: null,// '/inherit.php?delete=:id:',
+            },
+            routePermission: {
+                list:   null,// '/permission.php?list',
+                update: null,// '/permission.php?save=:id:',
             },
             components: {
                 rules:  Rules,
                 owners: Owners,
                 inherit: Inherit,
+                permission: Permission,
             },
         };
 

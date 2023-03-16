@@ -3,6 +3,7 @@
 namespace Wnikk\LaravelAccessUi\Http\Controllers;
 
 use Illuminate\Support\Facades\View;
+use Wnikk\LaravelAccessRules\Contracts\Owner as OwnerContract;
 
 class AccessUiController
 {
@@ -41,14 +42,56 @@ class AccessUiController
     /**
      * @return \Illuminate\Contracts\View\View
      */
-    public function inherit($owner)
+    public function management(OwnerContract $owners)
+    {
+        if (!config('accessUi.grid_owners')) abort(403, 'Config "accessUi.grid_owners" does not allow access');
+
+        $types = array_map('basename', $owners->getListTypes());
+        $list  = $owners::all();
+        $groups = [];
+        foreach ($list as $item) {
+            if (empty($groups[$item->type])) {
+                $groups[$item->type] = [
+                    'name' => $types[$item->type]??'#ID:'.$item->type,
+                    'list' => [],
+                ];
+            }
+            $groups[$item->type]['list'][] = $item->toArray();
+        }
+
+        return View::make('accessUi::management', [
+            'routes' => [
+                'inherit'    => config('accessUi.grid_inherit')?route('accessUi.inherit', ':owner:'):null,
+                'permission' => config('accessUi.grid_permission')?route('accessUi.permission', ':owner:'):null,
+            ],
+            'owners' => $groups,
+        ]);
+    }
+
+    /**
+     * @return \Illuminate\Contracts\View\View
+     */
+    public function inherit(int $owner)
     {
         $accept = config('accessUi.grid_inherit');
 
         return View::make('accessUi::inherit', ['routes' => [
             'list'   => route('accessUi.owner.inherit-data.index', ['owner' => $owner]),
             'create' => $accept?route('accessUi.owner.inherit-data.store', ['owner' => $owner]):null,
-            'delete' => $accept?route('accessUi.owner.inherit-data.destroy', ['id' => ':id:', 'owner' => $owner]):null,
+            'delete' => $accept?route('accessUi.owner.inherit-data.destroy', ['owner' => $owner, 'id' => ':id:']):null,
+        ]]);
+    }
+
+    /**
+     * @return \Illuminate\Contracts\View\View
+     */
+    public function permission(int $owner)
+    {
+        $accept = config('accessUi.grid_permission');
+
+        return View::make('accessUi::permission', ['routes' => [
+            'list'   => route('accessUi.owner.permission-data.index', ['owner' => $owner]),
+            'update' => $accept?route('accessUi.owner.permission-data.update', ['owner' => $owner, 'id' => ':id:']):null,
         ]]);
     }
 }

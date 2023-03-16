@@ -84,6 +84,35 @@ const helper = {
         return(-1^n)>>>0;
     },
 
+    /**
+     * Array list to tree
+     *
+     * @param {array} dataset
+     * @param {object} options
+     * @returns array
+     */
+    createDataTree: (dataset, options) => {
+        options = options || {};
+        let ID_KEY = options.idKey || 'id';
+        let PARENT_KEY = options.parentKey || 'parent_id';
+        let CHILDREN_KEY = options.childrenKey || 'children';
+        const hashTable = Object.create(null);
+        dataset.forEach(
+            aData => {
+                hashTable[aData[ID_KEY]] = {...aData};
+                hashTable[aData[ID_KEY]][CHILDREN_KEY] = [];
+            }
+        );
+        const dataTree = [];
+        dataset.forEach(aData => {
+            if(aData[PARENT_KEY] && hashTable[aData[PARENT_KEY]]){
+                hashTable[aData[PARENT_KEY]][CHILDREN_KEY].push(hashTable[aData[ID_KEY]]);
+            } else{
+                dataTree.push(hashTable[aData[ID_KEY]]);
+            }
+        });
+        return dataTree;
+    },
 };
 
 export default helper;

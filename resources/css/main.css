@@ -19,6 +19,9 @@
     --alert-success-text: #1e6641;
     --alert-warning-bg: #fdf1d3;
     --alert-warning-text: #806013;
+
+    --permission-yes: #234f1e;
+    --permission-no: #9c1001;
 }
 
 .accessUi .fade-enter-active,
@@ -58,7 +61,8 @@
 
 .accessUi-rules-list .list > .rule-item,
 .accessUi-owners-list .list > .owner-item,
-.accessUi-inherits-list .list > .inherit-item {
+.accessUi-inherits-list .list > .inherit-item,
+.accessUi-permissions-list .list > .permission-item {
     display: inline-block;
     vertical-align: top;
     width: 98%;
@@ -68,7 +72,8 @@
 .accessUi-owners-list .owner-item details,
 .accessUi-owners-list .owner-item article,
 .accessUi-inherits-list .inherit-item details,
-.accessUi-inherits-list .inherit-item article {
+.accessUi-inherits-list .inherit-item article,
+.accessUi-permissions-list .permission-item details {
     max-width: 400px;
     width: 95%;
     padding: 1rem;
@@ -86,26 +91,62 @@
 .accessUi-owners-list .owner-item summary,
 .accessUi-owners-list .owner-item h4,
 .accessUi-inherits-list .inherit-item summary,
-.accessUi-inherits-list .inherit-item h4 {
+.accessUi-inherits-list .inherit-item h4,
+.accessUi-permissions-list .permission-item summary {
     margin: -1rem;
     padding: 1rem 110px 1rem 1rem;
     border-radius: 7px;
     background-color: var(--text-bg-color);
     box-shadow: 0 20px 27px 0 rgba(0,0,0,.05);
 }
-.accessUi-rules-list .rule-item article {
+.accessUi-owners-list .owner-item h4,
+.accessUi-inherits-list .inherit-item h4 {
+    font-size: 16px;
+}
+
+
+.accessUi-permissions-list .permission-item summary .badges {
+    display: block;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    max-width: 250px;
+    text-align: right;
+    overflow: hidden;
+}
+.accessUi-permissions-list .permission-item details[open] summary .badges {
+    display: none;
+}
+
+.accessUi-rules-list .rule-item article,
+.accessUi-permissions-list .permission-item article {
     margin-top: 2rem;
 }
-.accessUi-rules-list .rule-item article p {
+.accessUi-rules-list .rule-item article p,
+.accessUi-permissions-list .permission-item article p {
     margin: 1rem 0;
 }
-.accessUi-rules-list .rule-item .options {
+.accessUi-permissions-list .permission-item .guard_name,
+.accessUi-permissions-list .permission-item .guard_option_name {
+    font-size: small;
+    margin: 0;
+    padding: 1rem;
+    border-left: 3px solid var(--border-hover);
+}
+.accessUi-permissions-list .permission-item .guard_option_name .badge {
+    margin-right: 1rem;
+}
+
+.accessUi-rules-list .rule-item .options,
+.accessUi-permissions-list .permission-item .options {
     color: var(--text-silver-color);
     font-size: small;
 }
 .accessUi-rules-list .rule-item time,
 .accessUi-owners-list .owner-item time,
-.accessUi-inherits-list .inherit-item time {
+.accessUi-inherits-list .inherit-item time,
+.accessUi-permissions-list .permission-item time {
     color: var(--text-silver-color);
     float: right;
     font-size: x-small;
@@ -133,12 +174,14 @@
 
 .accessUi-rules-list > fieldset,
 .accessUi-owners-list > fieldset,
-.accessUi-inherits-list > fieldset {
+.accessUi-inherits-list > fieldset,
+.accessUi-permissions-list > fieldset {
     border: none;
 }
 .accessUi-rules-list .rule-item .info fieldset,
 .accessUi-owners-list .owner-item .info fieldset,
-.accessUi-inherits-list .inherit-item .info fieldset {
+.accessUi-inherits-list .inherit-item .info fieldset,
+.accessUi-permissions-list .permission-item .info fieldset {
     position: absolute;
     top: 0;
     right: 0;
@@ -147,14 +190,13 @@
     border: none;
     text-align: right;
 }
-.accessUi-rules-list .rule-item .list-child {
+.accessUi-rules-list .rule-item .list-child,
+.accessUi-permissions-list .permission-item .list-child {
     list-style-type: none;
     margin: 0;
     padding: 0 0 0 1.5rem;
 }
-.accessUi-rules-list .icon,
-.accessUi-owners-list .icon,
-.accessUi-inherits-list .icon {
+.accessUi .icon {
     height: 24px;
     width: 44px;
     border: 1px solid var(--border-main);
@@ -165,33 +207,66 @@
 .accessUi-inherits-list .icon {
     display: inline-block;
 }
-.accessUi-rules-list .icon:hover,
-.accessUi-owners-list .icon:hover,
-.accessUi-inherits-list .icon:hover {
+.accessUi .icon:hover {
     cursor: pointer;
     border: 1px solid var(--border-hover);
 }
-.accessUi-rules-list .icon:active,
-.accessUi-owners-list .icon:active,
-.accessUi-inherits-list .icon:active {
+.accessUi .icon:active {
     border: 1px solid var(--border-hover);
     background-color: var(--border-main);
 }
+
+.accessUi .permission-icon {
+    display: inline-block;
+    width: 26px;
+    height: 1rem;
+}
+.accessUi .permission-icon:before {
+    content: " ";
+    display: block;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    margin-top: -2px;
+}
+.accessUi .permission-icon.yes:before {
+    background-color: var(--permission-yes);
+}
+.accessUi .permission-icon.no:before {
+    background-color: var(--permission-no);
+}
+.accessUi .permission-icon.inherit:before {
+    opacity: 0.5;
+}
+.accessUi-permissions-list .permission-item summary .badges .permission-icon {
+    width: 26px;
+    height: 100%;
+}
+.accessUi-permissions-list .permission-item summary .badges .permission-icon:before {
+    height: 100%;
+    margin-top: 0;
+    border-radius: 7px;
+}
+
+
 .accessUi-rules-list form,
 .accessUi-owners-list form,
-.accessUi-inherits-list .edit form {
+.accessUi-inherits-list .edit form,
+.accessUi-permissions-list .edit form {
     padding: 1rem;
     margin: 1rem 0 -1rem;
 }
 .accessUi-rules-list form fieldset,
 .accessUi-owners-list form fieldset,
-.accessUi-inherits-list form fieldset {
+.accessUi-inherits-list form fieldset,
+.accessUi-permissions-list form fieldset {
     border: none;
     padding: 0;
     margin: 1rem 0;
 }
 .accessUi-rules-list .edit form label,
-.accessUi-owners-list .edit form label {
+.accessUi-owners-list .edit form label,
+.accessUi-permissions-list .edit form label {
     display: block;
     margin-bottom: 0.5rem;
     color: var(--inp-label);

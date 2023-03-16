@@ -1,5 +1,6 @@
 
-# Laravel Access Rules Ui (Laravel Permissions Package User Interface)
+# Laravel Access Control Rules Ui
+(ACR - Access Control Rules, Permissions Package with User Interface)
 
 [![License](https://poser.pugx.org/wnikk/laravel-access-ui/license)](//packagist.org/packages/wnikk/laravel-access-ui)
 [![PHP Version Require](http://poser.pugx.org/wnikk/laravel-access-ui/require/php)](https://packagist.org/packages/wnikk/laravel-access-ui)
@@ -7,7 +8,8 @@
 [![Latest Stable Version](https://poser.pugx.org/wnikk/laravel-access-ui/v)](//packagist.org/packages/wnikk/laravel-access-ui)
 [![Latest Unstable Version](http://poser.pugx.org/wnikk/laravel-access-ui/v/unstable)](https://packagist.org/packages/wnikk/laravel-access-ui)
 
-This is FrontEnd for the Backend package [Laravel Access Rules](https://github.com/wnikk/laravel-access-rules/).
+This is FrontEnd for package [Laravel Access Rules](https://github.com/wnikk/laravel-access-rules/).
+ 
 
 ## What does Access Rules support?
 
@@ -20,6 +22,7 @@ This is FrontEnd for the Backend package [Laravel Access Rules](https://github.c
 - Multiple permissions can be attached to user or group.
 - Permissions can be inherited with unlimited investment from users and groups.
 - Laravel gates and policies.
+- Frontend themes, default "ukit".
 
 
 ## Documentation, Installation, and Usage Instructions Backend

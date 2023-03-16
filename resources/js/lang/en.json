@@ -1,6 +1,7 @@
 {
     "rule": {
         "create.title": "New rule",
+        "edit.title": "Title rule",
         "edit.guard_name": "Technical name rule",
         "edit.options": "Validation for parameter option",
         "edit.description": "Description",
@@ -16,6 +17,13 @@
     "inherit": {
         "create.title": "New inherit",
         "create.owners": "Owner"
+    },
+    "permission": {
+        "edit.optioninfo": "This rule contains possible options, indicate the necessary option for installing a resolution or prohibition:",
+        "status.yes": "Allowed",
+        "status.no": "Forbidden",
+        "status.yes-inherit": "Allowed, inherited",
+        "status.no-inherit": "Forbidden, inherited"
     },
     "global": {
         "inp.select": "Type to search",

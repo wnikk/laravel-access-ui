@@ -56,7 +56,14 @@ return [
     /**
      * Enable view inheritance
      *
-     * Enable/Disable the possibility to create/update/delete inheritance from the panel.
+     * Enable/Disable the possibility to add/remove inheritance from the panel.
      */
     'grid_inherit' => true,
+
+    /**
+     * Enable view permission
+     *
+     * Enable/Disable the possibility to add/remove permission from the panel.
+     */
+    'grid_permission' => true,
 ];

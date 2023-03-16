@@ -98,7 +98,7 @@ class InheritController extends Controller
      */
     public function callAction($method, $parameters)
     {
-        if (!in_array($method, ['index']) && !config('accessUi.grid_inherit')){
+        if (!config('accessUi.grid_inherit')){
             abort(403);
         }
 

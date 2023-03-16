@@ -1,13 +1,9 @@
 <template>
 
     <div v-if="message" :class="[
-      'alert',
-      status ? 'alert-success':'alert-warning',
-    ]">
-
-        {{ message }}
-
-    </div>
+        'alert',
+        status ? 'alert-success':'alert-warning',
+    ]" v-html="message"></div>
 
 </template>
 

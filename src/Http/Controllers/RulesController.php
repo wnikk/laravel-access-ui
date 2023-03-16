@@ -22,7 +22,7 @@ class RulesController extends Controller
             'list'    => $rule::all([
                 'id', 'parent_id',
                 'guard_name', 'options',
-                'description',
+                'title', 'description',
                 'created_at', 'deleted_at',
             ])->toArray(),
         ];
@@ -37,7 +37,7 @@ class RulesController extends Controller
      */
     public function callAction($method, $parameters)
     {
-        if (!in_array($method, ['index']) && !config('accessUi.grid_rules')){
+        if (!config('accessUi.grid_rules')) {
             abort(403);
         }
 

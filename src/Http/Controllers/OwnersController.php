@@ -44,13 +44,16 @@ class OwnersController extends Controller
         $type = $request->type;
         $type = (!$type||$type==='all')?null:$this->owner->getTypeID($type);
 
-        if (!$this->supportTypes) abort(403, 'Empty supportTypes');
+        if (!$this->supportTypes){
+            abort(403, 'Empty supportTypes');
+        }
 
         if (!$type) {
             $select = $this->owner::whereIn('type', array_keys($this->supportTypes));
         } else {
-            if (!in_array($type, array_keys($this->supportTypes))) abort(403, 'Type of owner not find in supportTypes');
-
+            if (!in_array($type, array_keys($this->supportTypes))) {
+                abort(403, 'Type of owner not find in supportTypes');
+            }
             $select = $this->owner::where('type', $type);
         }
 
@@ -74,7 +77,7 @@ class OwnersController extends Controller
      */
     public function callAction($method, $parameters)
     {
-        if (!in_array($method, ['index']) && !config('accessUi.grid_owners')){
+        if (!config('accessUi.grid_owners')) {
             abort(403);
         }
 
