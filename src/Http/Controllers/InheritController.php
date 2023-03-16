@@ -70,9 +70,9 @@ class InheritController extends Controller
                 'id'          => $item->id,
                 'created_at'  => $item->created_at,
                 'owner_id'    => $item->owner_parent_id,
-                'type'        => $parent->type,
-                'name'        => $parent->name,
-                'original_id' => $parent->original_id,
+                'type'        => $parent?$parent->type:null,
+                'name'        => $parent?$parent->name:null,
+                'original_id' => $parent?$parent->original_id:null,
             ];
         }
 
