@@ -43,6 +43,31 @@ And publish the **config/accessUi.php** config file with:
 php artisan vendor:publish --provider="Wnikk\LaravelAccessRules\AccessUiServiceProvider"
 ```
 
+## Optional GUI Routes
+| HTTP method| Route| Pages Name| Corresponding Action| 
+|----|----|----|----|
+| GET| accessui/rules| accessUi.rules| ...AccessUiController@rules|  
+| GET| accessui/owners/{type}| accessUi.owners| ...AccessUiController@owners|
+| GET| accessui/management| accessUi.management| ...AccessUiController@management|
+| GET| accessui/inherit/{owner}| accessUi.inherit| ...AccessUiController@inherit| 
+| GET| accessui/permission/{owner}| accessUi.permission| ...AccessUiController@permission|
+
+| HTTP method| Route| Data JSON Name| Corresponding Action|
+|----|----|----|----|
+| GET| accessui/rules-data| accessUi.rules-data.index| ...RulesController@index| 
+| POST| accessui/rules-data| accessUi.rules-data.store| ...RulesController@store| 
+| PUT| accessui/rules-data/{id}| accessUi.rules-data.update| ...RulesController@update| 
+| DELETE| accessui/rules-data/{id}| accessUi.rules-data.destroy| ...RulesController@destroy| 
+| GET| accessui/owners-data| accessUi.owners-data.index| ...OwnersController@index| 
+| POST| accessui/owners-data| accessUi.owners-data.store| ...OwnersController@store| 
+| PUT| accessui/owners-data/{id}| accessUi.owners-data.update| ...OwnersController@update| 
+| DELETE| accessui/owners-data/{id}| accessUi.owners-data.destroy| ...OwnersController@destroy| 
+| GET| accessui/owner/{owner}/inherit-data| accessUi.owner.inherit-data.index| ...InheritController@index| 
+| POST| accessui/owner/{owner}/inherit-data| accessUi.owner.inherit-data.store| ...InheritController@store| 
+| DELETE| accessui/owner/{owner}/inherit-data/{id}| accessUi.owner.inherit-data.destroy| ...InheritController@destroy| 
+| GET| accessui/owner/{owner}/permission-data| accessUi.owner.permission-data.index| ...PermissionController@index| 
+| PUT| accessui/owner/{owner}/permission-data/{id}| accessUi.owner.permission-data.update| ...PermissionController@update| 
+
 
 ## Contributing
 
