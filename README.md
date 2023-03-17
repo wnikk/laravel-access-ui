@@ -1,5 +1,5 @@
 
-![Laravel Access Control Rules Ui](https://raw.githubusercontent.com/wnikk/laravel-access-ui/main/docs/art/interface.gif)
+![Laravel Access Control Rules Ui](https://raw.githubusercontent.com/wnikk/laravel-access-ui/main/docs/art/interface.webp)
 
 # Laravel Access Control Rules Ui
 (ACR - Access Control Rules, Permissions Package with User Interface)
