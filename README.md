@@ -27,10 +27,11 @@ This is FrontEnd for package [Laravel Access Rules](https://github.com/wnikk/lar
 
 ## Documentation, Installation, and Usage Instructions Backend
 
+Before using UI, it is necessary to install the ACR (Access Control Rules) itself.
 See the [documentation](https://github.com/wnikk/laravel-access-rules/tree/master/docs) for detailed installation and usage instructions.
 
 
-## You can install the package using composer:
+## You can install the package UI using composer:
 
 ```bash
 composer require wnikk/laravel-access-ui
