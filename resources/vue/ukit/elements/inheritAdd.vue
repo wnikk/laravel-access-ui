@@ -1,27 +1,30 @@
 <template>
     <Transition name="fade">
         <details open="open" class="edit">
-            <summary>{{ rule.guard_name || rule.form_title }}</summary>
-            <form :data-id=rule.id @submit.prevent="saveRule($event)">
-                <fieldset>
-                    <label>{{ $t('rule.edit.title') }}</label>
-                    <input name="title" :value=rule.title />
+            <summary>{{ $t('inherit.create.title') }}</summary>
+            <form @submit.prevent="saveInherit($event)">
+
+                <fieldset v-if=owners>
+                    <label>{{ $t('inherit.create.owners') }}</label>
+
+                    <Multiselect
+                        v-model="owner"
+                        :options="options"
+                        :allow-empty="false"
+                        :placeholder="$t('global.inp.select')"
+                        group-label="typeName"
+                        group-values="list"
+                        track-by="id"
+                        label="name"
+                    >
+                        <span slot="noResult">{{ $t('global.inp.select.noResult') }}</span>
+                    </Multiselect>
+
                 </fieldset>
-                <fieldset>
-                    <label>{{ $t('rule.edit.description') }}</label>
-                    <textarea name="description" :value=rule.description></textarea>
-                </fieldset>
-                <fieldset>
-                    <label>{{ $t('rule.edit.guard_name') }}</label>
-                    <input name="guard_name" :value=rule.guard_name />
-                </fieldset>
-                <fieldset>
-                    <label>{{ $t('rule.edit.options') }}</label>
-                    <input name="options" :value=rule.options />
-                </fieldset>
+
                 <alert :status="alertStatus" :message="alertText" />
+
                 <fieldset>
-                    <input type="hidden" name="id" :value=rule.id />
                     <button class="btn btn-save" :disabled=lock>
                         {{ $t('global.btn.save') }}
                     </button>
@@ -29,31 +32,52 @@
                         {{ $t('global.btn.cancel') }}
                     </button>
                 </fieldset>
+
             </form>
         </details>
     </Transition>
 </template>
 
 <script>
-import Alert from '@/elements/alert.vue'
+import Alert from './alert.vue'
+import Multiselect from 'vue-multiselect'
 
 export default {
-    name: "ruleEdit",
+    name: "InheritAdd",
     components: {
-        Alert
+        Alert,
+        Multiselect
     },
     props: {
-        rule: Object,
+        types: Object,
+        owners: Object,
     },
     data() {
         return {
             lock: false,
             alertStatus: true,
             alertText: null,
+            options: [],
+            owner: null,
         };
     },
     methods: {
-        saveRule: async function(e)
+        makeOwnerTree: async function()
+        {
+            let tree = {};
+            for (const item of this.owners)
+            {
+                if( typeof(tree[item.typeName]) === 'undefined') {
+                    tree[item.typeName] = {
+                        typeName: item.typeName,
+                        list: [],
+                    };
+                }
+                tree[item.typeName].list.push(item);
+            }
+            this.options = Object.values(tree);
+        },
+        saveInherit: async function(e)
         {
             const that = this;
             const form = this.$el.querySelector('form');
@@ -66,9 +90,9 @@ export default {
             await new Promise(resolve => setTimeout(resolve, 10));
 
             this.emitter.emit(
-                'saveRule',
+                'saveInherit',
                 form,
-                this.rule.id,
+                this.owner?.id,
                 data,
                 function (result, message)
                 {
@@ -87,6 +111,7 @@ export default {
         },
     },
     created() {
+        this.makeOwnerTree();
     },
 };
 </script>

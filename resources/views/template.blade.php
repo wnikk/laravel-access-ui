@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Permission example</title>
+    <title>Rules and Owners example</title>
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -14,17 +14,7 @@
 
     @include('accessUi::links')
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function(e) {
-            accessUi.init(document.body, 'permission',{
-                csrfToken: document.querySelector('meta[name="csrf-token"]')?.content,
-                routePermission: {
-                    list:   '{{ $routes['list'] }}',
-                    update: '{{ $routes['update'] }}'
-                },
-            });
-        });
-    </script>
+    @include('accessUi::main')
 
 </head>
 <body>

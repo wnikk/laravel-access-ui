@@ -1,26 +1,25 @@
 <template>
 
-    <section class="accessUi accessUi-owners-list">
+    <section class="accessUi-inherits-list">
         <alert :status="alertStatus" :message="alertText" />
         <fieldset>
-            <button v-if=availableCreate class="icon icon-create" @click="openCreateOwner($event)"></button>
+            <button v-if=availableCreate class="icon icon-create" @click="openCreateInherit($event)"></button>
         </fieldset>
         <div class="section-body custom-style">
-            <ul class="list" v-if="(ownersList && ownersList.length) || displayCreateOwner">
+            <ul class="list" v-if="(inheritList && inheritList.length) || displayCreateInherit">
 
-                <li v-if="displayCreateOwner" data-id="0" class="owner-item">
-                    <OwnerEdit
-                        :owner="{ id: newOwnerId, form_title: $t('owner.create.title') }"
+                <li v-if="displayCreateInherit" data-id="0" class="inherit-item">
+                    <InheritAdd
                         :types="typesList"
-                        @cancel="cancelCreateOwner()"
-                    ></OwnerEdit>
+                        :owners="ownersList"
+                        @cancel="cancelCreateInherit()"
+                    ></InheritAdd>
                 </li>
 
-                <owner v-for="child in ownersList"
-                      :owner="child"
-                      :availableEdit=availableEdit
+                <inherit v-for="child in inheritList"
+                      :inherit="child"
                       :availableDelete=availableDelete
-                ></owner>
+                ></inherit>
             </ul>
         </div>
     </section>
@@ -28,26 +27,23 @@
 </template>
 
 <script>
-import Owner from '@/elements/owner.vue'
-import OwnerEdit from '@/elements/ownerEdit.vue'
-import Alert from '@/elements/alert.vue'
+import Inherit from './elements/inherit.vue'
+import InheritAdd from './elements/inheritAdd.vue'
+import Alert from './elements/alert.vue'
 
 export default {
-    name: "OwnersList",
+    name: "InheritsList",
     components: {
-        Owner,
-        OwnerEdit,
+        Inherit,
+        InheritAdd,
         Alert
     },
     props: {
-        csrfToken: String,
-
-        routeOwners: {
+        routeInherit: {
             type: Object,
             default: {
                 list:   null,
                 create: null,
-                update: null,
                 delete: null,
             },
         },
@@ -55,39 +51,35 @@ export default {
     data () {
         return {
             availableCreate: true,
-            availableEdit: true,
             availableDelete: true,
 
-            displayCreateOwner: false,
-            newOwnerId: ':new:',
+            displayCreateInherit: false,
+            newInheritId: ':new:',
 
             alertStatus: true,
             alertText: null,
 
-            ownersList: [],
+            inheritList: [],
             typesList: {},
+            ownersList: [],
         };
     },
     methods: {
 
-        openCreateOwner: function () {
-            this.displayCreateOwner = true;
+        openCreateInherit: function () {
+            this.displayCreateInherit = true;
         },
-        cancelCreateOwner: function () {
-            this.displayCreateOwner = false;
+        cancelCreateInherit: function () {
+            this.displayCreateInherit = false;
         },
 
-        saveOwner: function (form, id, data, callback)
+        saveInherit: function (form, owner_id, data, callback)
         {
             let fun, url;
 
-            if (id === this.newOwnerId) {
-                fun = 'POST';
-                url = this.routeOwners.create;
-            } else {
-                fun = 'PUT';
-                url = this.routeOwners.update.replace(':id:', id);
-            }
+            fun = 'POST';
+            url = this.routeInherit.create;
+            data.append('owner_id', owner_id);
 
             this.$http.request(url, {
                 method: fun,
@@ -97,7 +89,7 @@ export default {
             })
                 .then((e) => {
                     callback(e.ok, e.data?.message);
-                    this.emitter.emit('loadOwner');
+                    this.emitter.emit('loadInherit');
                 })
                 .catch((e, res) => {
                     let msg = e.data?.message;
@@ -108,12 +100,12 @@ export default {
                 });
         },
 
-        deleteOwner: function (form, id, callback)
+        deleteInherit: function (form, owner_id, callback)
         {
-            this.$http.delete(this.routeOwners.delete.replace(':id:', id), {context: form})
+            this.$http.delete(this.routeInherit.delete.replace(':id:', owner_id), {context: form})
                 .then((e) => {
                     callback(e.ok, e.data?.message);
-                    this.emitter.emit('loadOwner');
+                    this.emitter.emit('loadInherit');
                 })
                 .catch((e, res) => {
                     let msg = e.data?.message;
@@ -124,11 +116,11 @@ export default {
                 });
         },
 
-        loadOwner: function ()
+        loadInherit: function ()
         {
             const context = this.$el;
             let that = this;
-            this.$http.get(this.routeOwners.list, {context: context})
+            this.$http.get(this.routeInherit.list, {context: context})
                 .then((e) => {
                     if (!e.data.list) {
                         let msg = e.data?.message;
@@ -137,24 +129,36 @@ export default {
                         that.alertText = 'EMPTY json prop "list"! '+msg;
                         return;
                     }
+
                     let types = e.data?.types;
                     if (!types) types = {};
                     that.typesList = types;
+
+                    that.ownersList = [];
+                    for (const owners of e.data?.owners) {
+                        let typeName = typeof (owners.type) !== 'undefined'?owners.type:null;
+                        typeName = typeof (types[typeName]) === 'undefined'?'#'+typeName:types[typeName];
+                        that.ownersList.push({
+                            ...owners,
+                            typeName
+                        });
+                    }
 
                     let exp = [];
                     for (const item of e.data?.list) {
                         let typeName = typeof (item.type) !== 'undefined'?item.type:null;
                         typeName = typeof (types[typeName]) === 'undefined'?'#'+typeName:types[typeName];
                         exp.push({
-                            id: item.id?item.id:null,
-                            type: typeof(item.type) !== 'undefined'?item.type:null,
-                            typeName: typeName,
+                            id:          item.id?item.id:null,
+                            created_at:  item.created_at?item.created_at:null,
+                            owner_id:    item.owner_id?item.owner_id:null,
+                            type:        typeof(item.type) !== 'undefined'?item.type:null,
+                            typeName:    typeName,
+                            name:        item.name?item.name:null,
                             original_id: typeof(item.original_id) !== 'undefined'?item.original_id:null,
-                            name: item.name?item.name:null,
-                            created_at: item.created_at?item.created_at:null,
                         });
                     }
-                    that.ownersList = exp;
+                    that.inheritList = exp;
                 })
                 .catch((e, res) => {
                     let msg = e.data?.message;
@@ -164,24 +168,15 @@ export default {
                 });
         },
     },
-    created() {
-        const headers =  {
-            'Accept': 'application/json, text/javascript',
-            'X-Requested-With': 'XMLHttpRequest',
-        };
-        if(this.csrfToken) headers['X-CSRF-TOKEN'] = this.csrfToken;
-        this.$http.setOptions({ headers });
-    },
     beforeMount () {
-        this.availableCreate  = !!this.routeOwners?.create;
-        this.availableEdit    = !!this.routeOwners?.update;
-        this.availableDelete  = !!this.routeOwners?.delete;
-        this.emitter.on('saveOwner', this.saveOwner);
-        this.emitter.on('deleteOwner', this.deleteOwner);
-        this.emitter.on('loadOwner', this.loadOwner);
+        this.availableCreate  = !!this.routeInherit?.create;
+        this.availableDelete  = !!this.routeInherit?.delete;
+        this.emitter.on('saveInherit', this.saveInherit);
+        this.emitter.on('deleteInherit', this.deleteInherit);
+        this.emitter.on('loadInherit', this.loadInherit);
     },
     mounted () {
-        this.emitter.emit('loadOwner');
+        this.emitter.emit('loadInherit');
     },
 };
 </script>

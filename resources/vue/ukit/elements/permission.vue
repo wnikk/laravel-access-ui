@@ -66,8 +66,8 @@
 </template>
 
 <script>
-import permissionUpdate from '@/elements/permissionUpdate.vue'
-import PermissionStatus from '@/elements/permissionStatus.vue'
+import permissionUpdate from './permissionUpdate.vue'
+import PermissionStatus from './permissionStatus.vue'
 
 export default {
     name: "Permission",

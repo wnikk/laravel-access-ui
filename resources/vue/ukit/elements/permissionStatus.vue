@@ -4,7 +4,7 @@
       className,
       permission ? 'yes' : 'no',
       inherit ? 'inherit':'',
-    ]" :title="$t('permission.status.'+(permission ? 'yes' : 'no')+(inherit ? '-inherit':''))"></i>
+    ]" :title="$t('permission.status.'+(permission ? 'yes' : 'no')+(inherit ? '_inherit':''))"></i>
 
 </template>
 <script>

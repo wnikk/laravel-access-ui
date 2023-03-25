@@ -1,6 +1,6 @@
 <template>
 
-    <section class="accessUi accessUi-permissions-list">
+    <section class="accessUi-permissions-list">
 
         <alert :status="alertStatus" :message="alertText" />
 
@@ -23,9 +23,9 @@
 </template>
 
 <script>
-import Permission from '@/elements/permission.vue'
-import Alert from '@/elements/alert.vue'
-import helper from './../js/libs/helper'
+import Permission from './elements/permission.vue'
+import Alert from './elements/alert.vue'
+import helper from './../../js/libs/helper'
 
 export default {
     name: "PermissionsList",
@@ -34,8 +34,6 @@ export default {
         Alert
     },
     props: {
-        csrfToken: String,
-
         routePermission: {
             type: Object,
             default: {
@@ -137,14 +135,6 @@ export default {
             this.permissionTree = helper.createDataTree(this.permissionList);
         },
 
-    },
-    created() {
-        const headers =  {
-            'Accept': 'application/json, text/javascript',
-            'X-Requested-With': 'XMLHttpRequest',
-        };
-        if(this.csrfToken) headers['X-CSRF-TOKEN'] = this.csrfToken;
-        this.$http.setOptions({ headers });
     },
     beforeMount () {
         this.availableUpdate  = !!this.routePermission?.update;

@@ -1,6 +1,6 @@
 <template>
 
-    <section class="accessUi accessUi-rules-list">
+    <section class="accessUi-rules-list">
         <alert :status="alertStatus" :message="alertText" />
         <fieldset>
             <button v-if="rulesTree && rulesTree.length" class="icon icon-expand" @click="expandAllTree($event)"></button>
@@ -29,10 +29,10 @@
 </template>
 
 <script>
-import Rule from '@/elements/rule.vue'
-import RuleEdit from '@/elements/ruleEdit.vue'
-import Alert from '@/elements/alert.vue'
-import helper from './../js/libs/helper'
+import Rule from './elements/rule.vue'
+import RuleEdit from './elements/ruleEdit.vue'
+import Alert from './elements/alert.vue'
+import helper from './../../js/libs/helper'
 
 export default {
     name: "RulesList",
@@ -42,8 +42,6 @@ export default {
         Alert
     },
     props: {
-        csrfToken: String,
-
         routeRules: {
             type: Object,
             default: {
@@ -192,14 +190,6 @@ export default {
         updateListToTree: function () {
             this.rulesTree = helper.createDataTree(this.rulesList);
         },
-    },
-    created() {
-        const headers =  {
-            'Accept': 'application/json, text/javascript',
-            'X-Requested-With': 'XMLHttpRequest',
-        };
-        if(this.csrfToken) headers['X-CSRF-TOKEN'] = this.csrfToken;
-        this.$http.setOptions({ headers });
     },
     beforeMount () {
         this.availableCreate  = !!this.routeRules?.create;

@@ -3,6 +3,13 @@
     --main-color: #30D5C8;
     --bg-color1: rgba(0, 204, 187, 0.5);
     --bg-color2: rgba(255,255,255,0.5);
+    --bg-image: repeating-linear-gradient(
+        -45deg, 
+        rgba(255,255,255,0.5), 
+        rgba(255,255,255,0.5) 2rem,
+        rgba(255,255,255,0.7) 2rem,
+        rgba(255,255,255,0.7) 4rem
+    );
 }
 
 .ajax-progress-element {
@@ -46,9 +53,11 @@
     white-space: nowrap;
     text-align: center;
     border-radius: 10px;
-    background-color: var(--bg-color2);
-    border: 1px solid var(--main-color);
     margin: 0;
+    border: 1px solid var(--main-color);
+    background-image: var(--bg-image);
+    background-size: 200% 200%;
+    animation: ajax-barberpole 60s linear infinite;
 }
 .ajax-loader-element:before {
     height: 100%;
@@ -103,6 +112,11 @@
     stroke: var(--main-color);
 }
 
+@keyframes ajax-barberpole {
+    100% {
+        background-position: 100% 100%;
+    }
+}
 @keyframes ajax-rotate {
     100% {
         transform: rotate(360deg);

@@ -17,9 +17,14 @@
                 <span v-if="owner.original_id" class="original_id">#{{ owner.original_id }}</span>
             </h4>
 
-            <fieldset v-if="availableEdit || availableDelete">
+            <fieldset v-if="availableInherit || availablePermission || availableEdit || availableDelete">
+
+                <button v-if=availableInherit class="icon icon-inherit" @click="$emit('editInherit', owner.id)"></button>
+                <button v-if=availablePermission class="icon icon-permission" @click="$emit('editPermission', owner.id)"></button>
+
                 <button v-if=availableEdit class="icon icon-edit" @click="editOwner($event)"></button>
                 <button v-if=availableDelete class="icon icon-delete" @click="deleteOwner($event)"></button>
+
             </fieldset>
 
             <label class="type">{{ owner.typeName }}</label>
@@ -30,14 +35,14 @@
 </template>
 
 <script>
-import OwnerEdit from '@/elements/ownerEdit.vue'
-import ownerDelete from '@/elements/ownerDelete.vue'
+import OwnerEdit from './ownerEdit.vue'
+import OwnerDelete from './ownerDelete.vue'
 
 export default {
     name: "Owner",
     components: {
         OwnerEdit,
-        ownerDelete
+        OwnerDelete
     },
     props: {
         className: {
@@ -52,8 +57,11 @@ export default {
             type: Boolean,
             default: true
         },
+        availableInherit: Boolean,
+        availablePermission: Boolean,
         owner: Object,
     },
+    emits: ['editInherit', 'editPermission'],
     data() {
         return {
             displayInfo: true,

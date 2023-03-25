@@ -1,21 +1,18 @@
 import * as Vue from 'vue';
-import emitter from 'tiny-emitter/instance'
+import Emitter from 'tiny-emitter'
 import helper from './libs/helper'
 import http from './libs/http'
 import i18n from './libs/vue-i18n'
 import localeEng from './lang/en.json'
 
-import Rules from '@/rules.vue';
-import Owners from '@/owners.vue';
-import Inherit from '@/inherits.vue';
-import Permission from '@/permissions.vue';
+import Main from '@/main.ukit.vue';
 
 import './../css/icon.css';
 import './../css/main.css';
 import 'vue-multiselect/dist/vue3-multiselect.css';
 
 /*!
- * Laravel-access-ui (theme:ukit) v1.0.0
+ * Laravel-access-ui (theme:ukit) v1.2.0
  * (c) 2023 Nikolya May
  * Released under the MIT License.
  */
@@ -30,6 +27,12 @@ import 'vue-multiselect/dist/vue3-multiselect.css';
 
         let config = {
             csrfToken: null,
+
+            availableRules: false,
+            availableOwners: false,
+            availableInherit: false,
+            availablePermission: false,
+
             routeRules: {
                 list:   null,// '/rules.php?list',
                 create: null,// '/rules.php?add',
@@ -51,47 +54,35 @@ import 'vue-multiselect/dist/vue3-multiselect.css';
                 list:   null,// '/permission.php?list',
                 update: null,// '/permission.php?save=:id:',
             },
-            components: {
-                rules:  Rules,
-                owners: Owners,
-                inherit: Inherit,
-                permission: Permission,
-            },
+            selectedComponent: 'rules',
         };
-
-        let selectedComponentName = 'rules';
-        let app;
 
         this.getLocale = (lang, group) => {
             if (typeof(this.locale[lang]) === 'undefined' || typeof(this.locale[lang][group]) === 'undefined') return undefined;
             return this.locale[lang][group];
         };
 
-        this.setComponentName = (componentName) => {
-            if (typeof (config.components[componentName]) === 'undefined') return;
-            selectedComponentName = componentName;
-        };
-
         this.setOptions = (options) => {
-            config = helper.extend(config, options);
+            return helper.extend(config, options);
         };
 
-        this.makeApp = () => {
+        this.makeApp = (options) => {
             const localApp = Vue.createApp(
-                config.components[selectedComponentName],
-                { ...config }
+                Main,
+                { ...options }
             );
             localApp.use(i18n);
             localApp.config.globalProperties.$http = http;
-            localApp.config.globalProperties.emitter = emitter;
+            localApp.config.globalProperties.emitter = new Emitter();
             return localApp;
         };
 
         this.init = (domElement, componentName, options) => {
-            if (options) this.setOptions(options);
-            if (componentName) this.setComponentName(componentName);
-            app = this.makeApp();
+            options = this.setOptions(options);
+            if (componentName) options.selectedComponent = componentName;
+            let app = this.makeApp(options);
             app.mount(domElement);
+            return app;
         };
     };
 

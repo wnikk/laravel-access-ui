@@ -47,13 +47,9 @@ php artisan vendor:publish --provider="Wnikk\LaravelAccessRules\AccessUiServiceP
 ```
 
 ## Optional GUI Routes
-| HTTP method| Route| Pages example| Controller| Action|  
+| HTTP method| Route| Main page| Controller| Action|  
 |----|----|----|----|----|
-| GET| accessui/rules| accessUi.rules| ...AccessUiController| rules|  
-| GET| accessui/owners/{type}| accessUi.owners| ...AccessUiController| owners|
-| GET| accessui/management| accessUi.management| ...AccessUiController| management|
-| GET| accessui/inherit/{owner}| accessUi.inherit| ...AccessUiController| inherit| 
-| GET| accessui/permission/{owner}| accessUi.permission| ...AccessUiController| permission|
+| GET| accessui/| accessUi.main | ...AccessUiController| main|
 
 | HTTP method| Route| Pages JSON data| Controller| Action|  
 |----|----|----|----|----|

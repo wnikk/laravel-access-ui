@@ -24,7 +24,7 @@
 </template>
 
 <script>
-import Alert from '@/elements/alert.vue'
+import Alert from './alert.vue'
 
 export default {
     name: "Inherit",

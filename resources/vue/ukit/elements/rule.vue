@@ -35,8 +35,8 @@
 </template>
 
 <script>
-import RuleEdit from '@/elements/ruleEdit.vue'
-import ruleDelete from '@/elements/ruleDelete.vue'
+import RuleEdit from './ruleEdit.vue'
+import ruleDelete from './ruleDelete.vue'
 
 export default {
     name: "Rule",

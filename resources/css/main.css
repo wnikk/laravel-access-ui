@@ -24,6 +24,33 @@
     --permission-no: #9c1001;
 }
 
+.accessUi .breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    padding: .75rem 1rem;
+    margin-bottom: 1rem;
+    list-style: none;
+}
+.accessUi .breadcrumb-item.active {
+    color: var(--inp-label);
+}
+.accessUi .breadcrumb-item > a,
+.accessUi .breadcrumb-item > a:visited {
+    text-decoration: none;
+    color: var(--btn-primary-bg);
+}
+.accessUi .breadcrumb-item > a:hover {
+    text-decoration: underline;
+    color: var(--btn-primary-bg-hover);
+}
+.accessUi .breadcrumb-item + .breadcrumb-item::before {
+    display: inline-block;
+    padding-right: .5rem;
+    padding-left: .5rem;
+    color: var(--inp-label);
+    content: "/";
+}
+
 .accessUi .fade-enter-active,
 .accessUi .fade-leave-active {
     transition: opacity 0.5s ease;
@@ -103,7 +130,9 @@
 .accessUi-inherits-list .inherit-item h4 {
     font-size: 16px;
 }
-
+.accessUi-owners-list .owner-item h4 {
+    padding-right: 210px;
+}
 
 .accessUi-permissions-list .permission-item summary .badges {
     display: block;
@@ -189,6 +218,9 @@
     padding: 10px 0;
     border: none;
     text-align: right;
+}
+.accessUi-owners-list .owner-item .info fieldset {
+    width: 200px;
 }
 .accessUi-rules-list .rule-item .list-child,
 .accessUi-permissions-list .permission-item .list-child {

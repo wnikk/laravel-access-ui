@@ -1,6 +1,6 @@
 {
     "name": "wnikk/laravel-access-ui",
-    "version": "1.0.1-rc.2",
+    "version": "1.2.0",
     "description": "Interface of simple ACR (Access Control Rules) for Laravel.",
     "license": "MIT",
     "keywords": [

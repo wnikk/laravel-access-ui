@@ -1,10 +1,10 @@
 <template>
     <Transition name="fade">
         <details open="open" class="delete">
-            <summary>{{ inherit.name }}</summary>
-            <form :data-id=inherit.id @submit.prevent="deleteInherit($event)">
+            <summary>{{ rule.guard_name }}</summary>
+            <form :data-id=rule.id @submit.prevent="deleteRule($event)">
 
-                <fieldset v-html="$t('inherit.delete.attention')"></fieldset>
+                <fieldset v-html="$t('rule.delete.attention')"></fieldset>
 
                 <alert :status="alertStatus" :message="alertText" />
 
@@ -23,15 +23,15 @@
 </template>
 
 <script>
-import Alert from '@/elements/alert.vue'
+import Alert from './alert.vue'
 
 export default {
-    name: "inheritDelete",
+    name: "ruleDelete",
     components: {
         Alert
     },
     props: {
-        inherit: Object,
+        rule: Object,
     },
     data() {
         return {
@@ -41,7 +41,7 @@ export default {
         };
     },
     methods: {
-        deleteInherit: async function(e)
+        deleteRule: async function(e)
         {
             const that = this;
             const form = this.$el.querySelector('form');
@@ -53,9 +53,9 @@ export default {
             await new Promise(resolve => setTimeout(resolve, 10));
 
             this.emitter.emit(
-                'deleteInherit',
+                'deleteRule',
                 form,
-                this.inherit.id,
+                this.rule.id,
                 function (result, message)
                 {
                     that.alertStatus = result;

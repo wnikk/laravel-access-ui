@@ -1,3 +1,3 @@
 
 import './bootstrap'
-import './index'
+import './index.ukit'

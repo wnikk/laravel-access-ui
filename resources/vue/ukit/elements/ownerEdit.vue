@@ -1,16 +1,34 @@
 <template>
     <Transition name="fade">
-        <details open="open" class="delete">
-            <summary>{{ rule.guard_name }}</summary>
-            <form :data-id=rule.id @submit.prevent="deleteRule($event)">
+        <details open="open" class="edit">
+            <summary>{{ owner.name || owner.form_title }}</summary>
+            <form :data-id=owner.id @submit.prevent="saveOwner($event)">
 
-                <fieldset v-html="$t('rule.delete.attention')"></fieldset>
+                <fieldset v-if=types>
+                    <label>{{ $t('owner.edit.type') }}</label>
+                    <select name="type">
+                        <option v-for="(option, index) in types" :value=index>
+                            {{ option }}
+                        </option>
+                    </select>
+                </fieldset>
+
+                <fieldset>
+                    <label>{{ $t('owner.edit.name') }}</label>
+                    <input name="name" :value=owner.name />
+                </fieldset>
+
+                <fieldset>
+                    <label>{{ $t('owner.edit.original_id') }}</label>
+                    <input name="original_id" :value=owner.original_id />
+                </fieldset>
 
                 <alert :status="alertStatus" :message="alertText" />
 
                 <fieldset>
+                    <input type="hidden" name="id" :value=owner.id />
                     <button class="btn btn-save" :disabled=lock>
-                        {{ $t('global.btn.delete') }}
+                        {{ $t('global.btn.save') }}
                     </button>
                     <button class="btn" @click="$emit('cancel')" :disabled=lock>
                         {{ $t('global.btn.cancel') }}
@@ -23,15 +41,16 @@
 </template>
 
 <script>
-import Alert from '@/elements/alert.vue'
+import Alert from './alert.vue'
 
 export default {
-    name: "ruleDelete",
+    name: "ownerEdit",
     components: {
         Alert
     },
     props: {
-        rule: Object,
+        types: Object,
+        owner: Object,
     },
     data() {
         return {
@@ -41,10 +60,11 @@ export default {
         };
     },
     methods: {
-        deleteRule: async function(e)
+        saveOwner: async function(e)
         {
             const that = this;
             const form = this.$el.querySelector('form');
+            const data = new FormData(form);
 
             this.lock = true;
             this.alertText = null;
@@ -53,9 +73,10 @@ export default {
             await new Promise(resolve => setTimeout(resolve, 10));
 
             this.emitter.emit(
-                'deleteRule',
+                'saveOwner',
                 form,
-                this.rule.id,
+                this.owner.id,
+                data,
                 function (result, message)
                 {
                     that.alertStatus = result;
@@ -71,6 +92,6 @@ export default {
             setTimeout(() => {that.lock = false;}, 500);
             return false;
         },
-    }
+    },
 };
 </script>

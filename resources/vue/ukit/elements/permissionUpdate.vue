@@ -43,8 +43,8 @@
 </template>
 
 <script>
-import Alert from '@/elements/alert.vue'
-import PermissionStatus from '@/elements/permissionStatus.vue'
+import Alert from './alert.vue'
+import PermissionStatus from './permissionStatus.vue'
 
 export default {
     name: "permissionUpdate",

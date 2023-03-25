@@ -1,30 +1,27 @@
 <template>
     <Transition name="fade">
         <details open="open" class="edit">
-            <summary>{{ $t('inherit.create.title') }}</summary>
-            <form @submit.prevent="saveInherit($event)">
-
-                <fieldset v-if=owners>
-                    <label>{{ $t('inherit.create.owners') }}</label>
-
-                    <Multiselect
-                        v-model="owner"
-                        :options="options"
-                        :allow-empty="false"
-                        :placeholder="$t('global.inp.select')"
-                        group-label="typeName"
-                        group-values="list"
-                        track-by="id"
-                        label="name"
-                    >
-                        <span slot="noResult">{{ $t('global.inp.select.noResult') }}</span>
-                    </Multiselect>
-
-                </fieldset>
-
-                <alert :status="alertStatus" :message="alertText" />
-
+            <summary>{{ rule.guard_name || rule.form_title }}</summary>
+            <form :data-id=rule.id @submit.prevent="saveRule($event)">
                 <fieldset>
+                    <label>{{ $t('rule.edit.title') }}</label>
+                    <input name="title" :value=rule.title />
+                </fieldset>
+                <fieldset>
+                    <label>{{ $t('rule.edit.description') }}</label>
+                    <textarea name="description" :value=rule.description></textarea>
+                </fieldset>
+                <fieldset>
+                    <label>{{ $t('rule.edit.guard_name') }}</label>
+                    <input name="guard_name" :value=rule.guard_name />
+                </fieldset>
+                <fieldset>
+                    <label>{{ $t('rule.edit.options') }}</label>
+                    <input name="options" :value=rule.options />
+                </fieldset>
+                <alert :status="alertStatus" :message="alertText" />
+                <fieldset>
+                    <input type="hidden" name="id" :value=rule.id />
                     <button class="btn btn-save" :disabled=lock>
                         {{ $t('global.btn.save') }}
                     </button>
@@ -32,52 +29,31 @@
                         {{ $t('global.btn.cancel') }}
                     </button>
                 </fieldset>
-
             </form>
         </details>
     </Transition>
 </template>
 
 <script>
-import Alert from '@/elements/alert.vue'
-import Multiselect from 'vue-multiselect'
+import Alert from './alert.vue'
 
 export default {
-    name: "InheritAdd",
+    name: "ruleEdit",
     components: {
-        Alert,
-        Multiselect
+        Alert
     },
     props: {
-        types: Object,
-        owners: Object,
+        rule: Object,
     },
     data() {
         return {
             lock: false,
             alertStatus: true,
             alertText: null,
-            options: [],
-            owner: null,
         };
     },
     methods: {
-        makeOwnerTree: async function()
-        {
-            let tree = {};
-            for (const item of this.owners)
-            {
-                if( typeof(tree[item.typeName]) === 'undefined') {
-                    tree[item.typeName] = {
-                        typeName: item.typeName,
-                        list: [],
-                    };
-                }
-                tree[item.typeName].list.push(item);
-            }
-            this.options = Object.values(tree);
-        },
-        saveInherit: async function(e)
+        saveRule: async function(e)
         {
             const that = this;
             const form = this.$el.querySelector('form');
@@ -90,9 +66,9 @@ export default {
             await new Promise(resolve => setTimeout(resolve, 10));
 
             this.emitter.emit(
-                'saveInherit',
+                'saveRule',
                 form,
-                this.owner?.id,
+                this.rule.id,
                 data,
                 function (result, message)
                 {
@@ -111,7 +87,6 @@ export default {
         },
     },
     created() {
-        this.makeOwnerTree();
     },
 };
 </script>

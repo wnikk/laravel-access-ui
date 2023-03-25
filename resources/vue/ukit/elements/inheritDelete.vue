@@ -1,34 +1,16 @@
 <template>
     <Transition name="fade">
-        <details open="open" class="edit">
-            <summary>{{ owner.name || owner.form_title }}</summary>
-            <form :data-id=owner.id @submit.prevent="saveOwner($event)">
+        <details open="open" class="delete">
+            <summary>{{ inherit.name }}</summary>
+            <form :data-id=inherit.id @submit.prevent="deleteInherit($event)">
 
-                <fieldset v-if=types>
-                    <label>{{ $t('owner.edit.type') }}</label>
-                    <select name="type">
-                        <option v-for="(option, index) in types" :value=index>
-                            {{ option }}
-                        </option>
-                    </select>
-                </fieldset>
-
-                <fieldset>
-                    <label>{{ $t('owner.edit.name') }}</label>
-                    <input name="name" :value=owner.name />
-                </fieldset>
-
-                <fieldset>
-                    <label>{{ $t('owner.edit.original_id') }}</label>
-                    <input name="original_id" :value=owner.original_id />
-                </fieldset>
+                <fieldset v-html="$t('inherit.delete.attention')"></fieldset>
 
                 <alert :status="alertStatus" :message="alertText" />
 
                 <fieldset>
-                    <input type="hidden" name="id" :value=owner.id />
                     <button class="btn btn-save" :disabled=lock>
-                        {{ $t('global.btn.save') }}
+                        {{ $t('global.btn.delete') }}
                     </button>
                     <button class="btn" @click="$emit('cancel')" :disabled=lock>
                         {{ $t('global.btn.cancel') }}
@@ -41,16 +23,15 @@
 </template>
 
 <script>
-import Alert from '@/elements/alert.vue'
+import Alert from './alert.vue'
 
 export default {
-    name: "ownerEdit",
+    name: "inheritDelete",
     components: {
         Alert
     },
     props: {
-        types: Object,
-        owner: Object,
+        inherit: Object,
     },
     data() {
         return {
@@ -60,11 +41,10 @@ export default {
         };
     },
     methods: {
-        saveOwner: async function(e)
+        deleteInherit: async function(e)
         {
             const that = this;
             const form = this.$el.querySelector('form');
-            const data = new FormData(form);
 
             this.lock = true;
             this.alertText = null;
@@ -73,10 +53,9 @@ export default {
             await new Promise(resolve => setTimeout(resolve, 10));
 
             this.emitter.emit(
-                'saveOwner',
+                'deleteInherit',
                 form,
-                this.owner.id,
-                data,
+                this.inherit.id,
                 function (result, message)
                 {
                     that.alertStatus = result;
@@ -92,6 +71,6 @@ export default {
             setTimeout(() => {that.lock = false;}, 500);
             return false;
         },
-    },
+    }
 };
 </script>
