@@ -1,5 +1,5 @@
 
-![Laravel Access Control Rules Ui](https://raw.githubusercontent.com/wnikk/laravel-access-ui/main/docs/art/interface.webp)
+![Laravel Access Control Rules](https://raw.githubusercontent.com/wnikk/laravel-access-rules/main/docs/art/laravel-access-control-rules-logo.png)
 
 # Laravel Access Control Rules Ui
 (ACR - Access Control Rules, Permissions Package with User Interface)
@@ -24,7 +24,7 @@ This is FrontEnd for package [Laravel Access Rules](https://github.com/wnikk/lar
 - Multiple permissions can be attached to user or group.
 - Permissions can be inherited with unlimited investment from users and groups.
 - Laravel gates and policies.
-- Frontend themes, default "ukit".
+- Frontend themes: "ukit", Bootstrap 4 and Bootstrap 5, default "bt".
 
 
 ## Documentation, Installation, and Usage Instructions Backend
@@ -43,8 +43,16 @@ composer require wnikk/laravel-access-ui
 And publish the **config/accessUi.php** config file with:
 
 ```bash
-php artisan vendor:publish --provider="Wnikk\LaravelAccessRules\AccessUiServiceProvider"
+php artisan vendor:publish --provider="Wnikk\LaravelAccessUi\AccessUiServiceProvider"
 ```
+
+## Theme
+### Bootstrap 4 and Bootstrap5
+![Laravel Access Control Rules Ui](https://raw.githubusercontent.com/wnikk/laravel-access-ui/main/docs/art/interface.bt.webp)
+
+### ukit
+![Laravel Access Control Rules Ui](https://raw.githubusercontent.com/wnikk/laravel-access-ui/main/docs/art/interface.ukit.webp)
+
 
 ## Optional GUI Routes
 | HTTP method| Route| Main page| Controller| Action|  
