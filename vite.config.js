@@ -11,7 +11,8 @@ export default defineConfig({
         assetsDir: '.',
         rollupOptions: {
             input: [
-                './resources/js/accessUi.ukit.js'
+                //'./resources/js/accessUi.ukit.js'
+                './resources/js/accessUi.bt.js'
             ],
             output: {
                 assetFileNames: '[name].[ext]',

@@ -5,14 +5,14 @@ import http from './libs/http'
 import i18n from './libs/vue-i18n'
 import localeEng from './lang/en.json'
 
-import Main from '@/main.ukit.vue';
+import Main from '@/main.bt.vue';
 
 import './../css/icon.css';
-import './../css/main.ukit.css';
+import './../css/main.bt.css';
 import 'vue-multiselect/dist/vue3-multiselect.css';
 
 /*!
- * Laravel-access-ui (theme:ukit) v1.2.0
+ * Laravel-access-ui (theme:bootstrap) v1.3.0
  * (c) 2023 Nikolya May
  * Released under the MIT License.
  */

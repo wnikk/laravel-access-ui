@@ -1,40 +1,56 @@
 <template>
-    <Transition name="fade">
-        <details open="open" class="delete">
-            <summary>{{ inherit.name }}</summary>
-            <form :data-id=inherit.id @submit.prevent="deleteInherit($event)">
+    <tr v-if="inherit" :data-id=inherit.id :class=className>
+        <th class="lbl-id text-center">
+            {{ inherit.owner_id }}
+        </th>
+        <td class="lbl-created_at text-secondary">
+            {{ inherit.created_at }}
+        </td>
+        <th class="lbl-owner_type">
+            {{ inherit.typeName }}
+        </th>
+        <td class="lbl-name">
+            <alert :status="alertStatus" :message="alertText" />
+            <label>{{ inherit.name }}</label>
+        </td>
+        <td class="lbl-original_id text-secondary">
+            <label>{{ inherit.original_id }}</label>
+        </td>
+        <td class="lbl-btn text-center">
 
-                <fieldset v-html="$t('inherit.delete.attention')"></fieldset>
-
-                <alert :status="alertStatus" :message="alertText" />
-
-                <fieldset>
-                    <button class="btn btn-save" :disabled=lock>
-                        {{ $t('global.btn.delete') }}
-                    </button>
-                    <button class="btn" @click="$emit('cancel')" :disabled=lock>
-                        {{ $t('global.btn.cancel') }}
-                    </button>
-                </fieldset>
-
+            <form v-if="availableDelete" :data-id=inherit.id @submit.prevent="deleteInherit($event)">
+                <button class="btn btn-icon btn-outline-danger btn-sm">
+                    <i class="icon icon-delete"></i>
+                </button>
             </form>
-        </details>
-    </Transition>
+
+        </td>
+    </tr>
 </template>
 
 <script>
 import Alert from './alert.vue'
 
 export default {
-    name: "inheritDelete",
+    name: "Inherit",
     components: {
         Alert
     },
     props: {
+        className: {
+            type: String,
+            default: 'inherit-item'
+        },
+        availableDelete: {
+            type: Boolean,
+            default: true
+        },
         inherit: Object,
     },
     data() {
         return {
+            displayDelete: false,
+
             lock: false,
             alertStatus: true,
             alertText: null,
@@ -55,7 +71,7 @@ export default {
             this.emitter.emit(
                 'deleteInherit',
                 form,
-                this.inherit.id,
+                this.inherit.owner_id,
                 function (result, message)
                 {
                     that.alertStatus = result;

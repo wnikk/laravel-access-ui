@@ -1,0 +1,104 @@
+
+.accessUi {
+    --permission-yes: #234f1e;
+    --permission-no: #9c1001;
+}
+
+.accessUi .icon {
+    height: 14px;
+    width: 14px;
+}
+
+.accessUi .th-tree,
+.accessUi .th-btn {
+    width: 90px;
+}
+.accessUi .accessUi-owners-list .th-tree,
+.accessUi .accessUi-owners-list .th-btn {
+    width: 180px;
+}
+
+.accessUi .th-tree .btn + .btn,
+.accessUi .lbl-btn .btn + .btn {
+    margin-left: 5px;
+}
+.accessUi .btn-icon {
+    padding-bottom: 0;
+}
+.accessUi .lbl-created_at {
+    font-size: xx-small;
+    max-width: 120px;
+    overflow: hidden;
+}
+.accessUi .btn-tree {
+    display: block;
+    font-size: x-large;
+}
+.accessUi .btn-tree.have-children {
+     cursor: pointer;
+ }
+.accessUi .btn-tree i {
+    font-style: normal;
+    display: inline-block;
+}
+.accessUi .btn-tree .triangle.open {
+    font-style: normal;
+    transform: rotate(90deg);
+}
+.accessUi .btn-tree i + i {
+    margin-left: 2px;
+}
+.accessUi .btn-tree .triangle {
+    font-size: xx-large;
+}
+.accessUi .lbl-description > blockquote {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 600px;
+    max-height: 3rem;
+    border-left: 3px solid silver;
+    padding-left: 1rem;
+}
+.accessUi .lbl-options > .text-secondary {
+    display: block;
+    font-size: small;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+    max-height: 1rem;
+}
+.accessUi .modal {
+    background-color: rgba(0,0,0,0.5);
+}
+/*
+.accessUi .permission-icon {
+    display: inline-block;
+    width: 26px;
+    height: 1rem;
+    margin-right: 4px;
+}
+.accessUi .permission-icon:before {
+    content: " ";
+    display: block;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    margin-top: -2px;
+}
+.accessUi .permission-icon.yes:before {
+    background-color: var(--permission-yes);
+}
+.accessUi .permission-icon.no:before {
+    background-color: var(--permission-no);
+}
+.accessUi .permission-icon.inherit:before {
+    opacity: 0.5;
+}
+*/
+.accessUi .permission-icon {
+    margin-right: 5px;
+}
+.accessUi .permission-icon.inherit {
+    opacity: 0.5;
+}
