@@ -47,7 +47,7 @@ php artisan vendor:publish --provider="Wnikk\LaravelAccessUi\AccessUiServiceProv
 ```
 
 ## Theme
-### Bootstrap 4 and Bootstrap5
+### Bootstrap 4 and Bootstrap 5
 ![Laravel Access Control Rules Ui](https://raw.githubusercontent.com/wnikk/laravel-access-ui/main/docs/art/interface.bt.webp)
 
 ### ukit
