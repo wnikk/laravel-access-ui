@@ -14,7 +14,7 @@
                 ></InheritAdd>
             </div>
 
-            <table class="table table-striped list" v-if="(inheritList && inheritList.length)">
+            <table class="table table-striped list">
                 <thead class="text-center">
                 <tr>
                     <th class="th-id">#</th>
@@ -29,11 +29,18 @@
                     </th>
                 </tr>
                 </thead>
-                <tbody>
+                <tbody v-if="(inheritList && inheritList.length)">
                     <inherit v-for="child in inheritList"
                              :inherit="child"
                              :availableDelete=availableDelete
                     ></inherit>
+                </tbody>
+                <tbody v-else>
+                    <tr>
+                        <th colspan="7">
+                            <div slot="no-result">{{ $t('global.inp.select.noResult') }}</div>
+                        </th>
+                    </tr>
                 </tbody>
             </table>
 

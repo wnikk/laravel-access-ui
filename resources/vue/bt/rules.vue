@@ -13,7 +13,7 @@
                 ></RuleEdit>
             </div>
 
-            <table class="table table-striped list" v-if="(rulesTree && rulesTree.length)">
+            <table class="table table-striped list">
                 <thead class="text-center">
                     <tr>
                         <th class="th-tree">
@@ -36,13 +36,20 @@
                         </th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody v-if="(rulesTree && rulesTree.length)">
                     <rule v-for="child in rulesTree"
                           :level=0
                           :rule="child"
                           :availableEdit=availableEdit
                           :availableDelete=availableDelete
                     ></rule>
+                </tbody>
+                <tbody v-else>
+                    <tr>
+                        <th colspan="7">
+                            <div slot="no-result">{{ $t('global.inp.select.noResult') }}</div>
+                        </th>
+                    </tr>
                 </tbody>
             </table>
 

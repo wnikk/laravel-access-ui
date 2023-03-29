@@ -14,7 +14,7 @@
                 ></OwnerEdit>
             </div>
 
-            <table class="table table-striped list" v-if="(ownersList && ownersList.length)">
+            <table class="table table-striped list">
                 <thead class="text-center">
                 <tr>
                     <th class="th-id">#</th>
@@ -29,7 +29,7 @@
                     </th>
                 </tr>
                 </thead>
-                <tbody>
+                <tbody v-if="(ownersList && ownersList.length)">
                     <owner v-for="child in ownersList"
                            :owner="child"
                            :availableEdit=availableEdit
@@ -39,6 +39,13 @@
                            @editInherit="openInheritEdit"
                            @editPermission="openPermissionEdit"
                     ></owner>
+                </tbody>
+                <tbody v-else>
+                    <tr>
+                        <th colspan="7">
+                            <div slot="no-result">{{ $t('global.inp.select.noResult') }}</div>
+                        </th>
+                    </tr>
                 </tbody>
             </table>
 

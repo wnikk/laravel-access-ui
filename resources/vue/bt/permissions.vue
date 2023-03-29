@@ -6,7 +6,7 @@
 
         <div class="section-body custom-style">
 
-            <table class="table table-striped list" v-if="(permissionTree && permissionTree.length)">
+            <table class="table table-striped list">
                 <thead class="text-center">
                 <tr>
                     <th class="th-tree">&nbsp;</th>
@@ -16,7 +16,7 @@
                     <th class="th-btn">&nbsp;</th>
                 </tr>
                 </thead>
-                <tbody>
+                <tbody v-if="(permissionTree && permissionTree.length)">
                     <permission v-for="child in permissionTree"
                         :level=0
                         :rule=child
@@ -25,6 +25,13 @@
                         :availableUpdate=availableUpdate
                         :availableDelete=availableUpdate
                     ></permission>
+                </tbody>
+                <tbody v-else>
+                    <tr>
+                        <th colspan="7">
+                            <div slot="no-result">{{ $t('global.inp.select.noResult') }}</div>
+                        </th>
+                    </tr>
                 </tbody>
             </table>
 
