@@ -28,9 +28,9 @@
                 </tbody>
                 <tbody v-else>
                     <tr>
-                        <th colspan="7">
-                            <div slot="no-result">{{ $t('global.inp.select.noResult') }}</div>
-                        </th>
+                        <td colspan="7">
+                            <div class="no-result text-center">{{ $t('global.inp.select.noResult') }}</div>
+                        </td>
                     </tr>
                 </tbody>
             </table>
