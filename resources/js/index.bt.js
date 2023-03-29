@@ -12,7 +12,7 @@ import './../css/main.bt.css';
 import 'vue-multiselect/dist/vue3-multiselect.css';
 
 /*!
- * Laravel-access-ui (theme:bootstrap) v1.3.1
+ * Laravel-access-ui (theme:bootstrap) v1.3.2
  * (c) 2023 Nikolya May
  * Released under the MIT License.
  */

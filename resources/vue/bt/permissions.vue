@@ -82,9 +82,9 @@ export default {
             data.append('id', rule_id);
 
             this.$http.request(url, {
-                method: fun,
+                method:  fun,
                 context: form,
-                data: JSON.stringify(Object.fromEntries(data)),
+                data:    JSON.stringify(Object.fromEntries(data)),
                 headers: {'Content-Type': 'application/json;charset=UTF-8'}
             })
                 .then((e) => {
@@ -110,33 +110,33 @@ export default {
                         let msg = e.data?.message;
                         if (!msg) msg = e.data;
                         that.alertStatus = false;
-                        that.alertText = 'EMPTY json prop "list"! '+msg;
+                        that.alertText   = 'EMPTY json prop "list"! '+msg;
                         return;
                     }
                     let exp = [];
                     for (const item of e.data.list) {
                         let permission = {
-                            simple: [],
+                            simple:  [],
                             complex: [],
                         };
                         if (item.permission) for (const i in item.permission) {
-                            const perm = item.permission[i];
+                            const perm   = item.permission[i];
                             const option = perm.option?perm.option:null;
                             permission[option?'complex':'simple'].push({
-                                option: option,
+                                option:     option,
                                 permission: perm.permission?perm.permission:false,
-                                inherit: perm.inherit?perm.inherit:false,
+                                inherit:    perm.inherit?perm.inherit:false,
                             });
                         }
                         exp.push({
-                            id: item.id?item.id:null,
-                            parent_id: item.parent_id?item.parent_id:0,
-                            guard_name: item.guard_name?item.guard_name:null,
-                            options: item.options?item.options:null,
-                            title: item.title?item.title:null,
+                            id:          item.id?item.id:null,
+                            parent_id:   item.parent_id?item.parent_id:0,
+                            guard_name:  item.guard_name?item.guard_name:null,
+                            options:     item.options?item.options:null,
+                            title:       item.title?item.title:null,
                             description: item.description?item.description:null,
-                            permission: permission,
-                            opened: false,
+                            permission:  permission,
+                            opened:      false,
                         });
                     }
                     that.permissionList = exp;
@@ -146,7 +146,7 @@ export default {
                     let msg = e.data?.message;
                     if (!msg) msg = e.data;
                     that.alertStatus = false;
-                    that.alertText = msg;
+                    that.alertText   = msg;
                 });
         },
         updateListToTree: function () {

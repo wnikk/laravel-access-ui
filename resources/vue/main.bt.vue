@@ -41,14 +41,16 @@ export default {
     data() {
         return {
             VueVersion: Vue.version,
-            display: '',
+            display: 'Transition',
             components: {
                 rules:  Rules,
                 owners: Owners,
                 inherit: Inherit,
-                permission: Permission,
+                permission: Permission
             },
             owner: 0,
+            usePath: false,
+            thatPath: null,
             attrs: {},
         };
     },
@@ -58,12 +60,13 @@ export default {
             if (owner) {
                 this.selectOwner(owner);
             }
-            if (typeof (this.components[name]) !== 'undefined') {
-                this.display = name;
+            if (typeof (this.components[name]) === 'undefined') {
+                console.error('Wrong component "'+name+'" name!');
+                return;
             }
             let objName = 'route'
-                + this.display.charAt(0).toUpperCase()
-                + this.display.slice(1);
+                + name.charAt(0).toUpperCase()
+                + name.slice(1);
             let routes = Object.assign({}, this[objName]);
             if(this.owner && routes) for (const i in routes) {
                 routes[i] = routes[i].replace(':owner:', this.owner);
@@ -71,19 +74,49 @@ export default {
             this.attrs = {};
             this.attrs[objName] = routes;
 
-            if (this.display === 'owners') {
+            if (name === 'owners') {
                 this.attrs.availableInherit    = this.availableInherit;
                 this.attrs.availablePermission = this.availablePermission;
             }
+            this.display = name;
+            this.fixedLinkPage();
         },
         selectOwner(id) {
             this.owner = id;
-        }
+        },
+        fixedLinkPage() {
+            if (!this.usePath) return;
+            let path = this.display;
+            if (this.display === 'inherit' || this.display === 'permission') {
+                path += ':' + this.owner;
+            }
+            this.thatPath = path;
+            path = '!'+path;
+            if (history.pushState) {
+                window.history.pushState(null, null, '#' + path);
+            } else {
+                window.location.hash = '#' + path;
+            }
+        },
+        goLinkPage(path) {
+            if (!this.usePath || path === this.thatPath || path.charAt(0) !== '!') return;
+            path          = path.slice(1).split(':', 2);
+            let component = path[0];
+            let owner     = path[1]??null;
+            path = component.charAt(0).toUpperCase() + component.slice(1);
+
+            if (!this['available'+path]) return;
+
+            this.display = 'Transition';
+            setTimeout(()=>{
+                this.selectComponent(component, owner);
+            }, 100);
+        },
     },
     computed: {
         startView()
         {
-            return this.components[this.display];
+            return this.components[this.display]??this.display;
         }
     },
     beforeMount () {
@@ -100,6 +133,18 @@ export default {
         };
         if(this.csrfToken) headers['X-CSRF-TOKEN'] = this.csrfToken;
         this.$http.setOptions({ headers });
+
+        if (
+            this.availableRules + this.availableOwners +
+            this.availableInherit + this.availablePermission
+            > 1
+        ) {
+            this.usePath = true;
+            window.addEventListener("hashchange", (event) => {
+                var currentPath = window.location.hash.slice(1);
+                this.goLinkPage(currentPath);
+            }, false);
+        }
     },
 }
 </script>

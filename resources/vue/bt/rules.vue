@@ -169,13 +169,13 @@ export default {
                     let exp = [];
                     for (const item of e.data?.list) {
                         exp.push({
-                            id: item.id?item.id:null,
-                            parent_id: item.parent_id?item.parent_id:0,
-                            guard_name: item.guard_name?item.guard_name:null,
-                            options: item.options?item.options:null,
-                            title: item.title?item.title:null,
+                            id:          item.id?item.id:null,
+                            parent_id:   item.parent_id?item.parent_id:0,
+                            guard_name:  item.guard_name?item.guard_name:null,
+                            options:     item.options?item.options:null,
+                            title:       item.title?item.title:null,
                             description: item.description?item.description:null,
-                            created_at: item.created_at?item.created_at:null,
+                            created_at:  item.created_at?new Date(item.created_at).toLocaleString():null,
                         });
                     }
                     that.rulesList = exp;

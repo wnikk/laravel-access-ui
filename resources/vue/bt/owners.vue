@@ -117,9 +117,9 @@ export default {
             }
 
             this.$http.request(url, {
-                method: fun,
+                method:  fun,
                 context: form,
-                data: JSON.stringify(Object.fromEntries(data)),
+                data:    JSON.stringify(Object.fromEntries(data)),
                 headers: {'Content-Type': 'application/json;charset=UTF-8'}
             })
                 .then((e) => {
@@ -161,7 +161,7 @@ export default {
                         let msg = e.data?.message;
                         if (!msg) msg = e.data;
                         that.alertStatus = false;
-                        that.alertText = 'EMPTY json prop "list"! '+msg;
+                        that.alertText   = 'EMPTY json prop "list"! '+msg;
                         return;
                     }
                     let types = e.data?.types;
@@ -171,14 +171,14 @@ export default {
                     let exp = [];
                     for (const item of e.data?.list) {
                         let typeName = typeof (item.type) !== 'undefined'?item.type:null;
-                        typeName = typeof (types[typeName]) === 'undefined'?'#'+typeName:types[typeName];
+                        typeName     = typeof (types[typeName]) === 'undefined'?'#'+typeName:types[typeName];
                         exp.push({
-                            id: item.id?item.id:null,
-                            type: typeof(item.type) !== 'undefined'?item.type:null,
-                            typeName: typeName,
+                            id:          item.id?item.id:null,
+                            type:        typeof(item.type) !== 'undefined'?item.type:null,
+                            typeName:    typeName,
                             original_id: typeof(item.original_id) !== 'undefined'?item.original_id:null,
-                            name: item.name?item.name:null,
-                            created_at: item.created_at?item.created_at:null,
+                            name:        item.name?item.name:null,
+                            created_at:  item.created_at?new Date(item.created_at).toLocaleString():null,
                         });
                     }
                     that.ownersList = exp;
@@ -187,7 +187,7 @@ export default {
                     let msg = e.data?.message;
                     if (!msg) msg = e.data;
                     that.alertStatus = false;
-                    that.alertText = msg;
+                    that.alertText   = msg;
                 });
         },
         openInheritEdit: function (owner_id) {
