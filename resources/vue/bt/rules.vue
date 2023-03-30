@@ -175,7 +175,7 @@ export default {
                             options:     item.options?item.options:null,
                             title:       item.title?item.title:null,
                             description: item.description?item.description:null,
-                            created_at:  item.created_at?new Date(item.created_at).toLocaleString():null,
+                            created_at:  item.created_at?new Date(item.created_at).toLocaleWithoutToday():null,
                         });
                     }
                     that.rulesList = exp;

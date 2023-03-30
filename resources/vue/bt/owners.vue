@@ -178,7 +178,7 @@ export default {
                             typeName:    typeName,
                             original_id: typeof(item.original_id) !== 'undefined'?item.original_id:null,
                             name:        item.name?item.name:null,
-                            created_at:  item.created_at?new Date(item.created_at).toLocaleString():null,
+                            created_at:  item.created_at?new Date(item.created_at).toLocaleWithoutToday():null,
                         });
                     }
                     that.ownersList = exp;

@@ -13,3 +13,15 @@
 //     forceTLS: (import.meta.env.VITE_PUSHER_SCHEME ?? 'https') === 'https',
 //     enabledTransports: ['ws', 'wss'],
 // });
+
+Date.prototype.toLocaleWithoutToday = function (lang, attr)
+{
+    const d = new Date(this).setHours(0, 0, 0, 0);
+    const t = new Date().setHours(0, 0, 0, 0);
+    if (d === t)
+    {
+        return this.toLocaleTimeString(lang, attr);
+    } else {
+        return this.toLocaleString(lang, attr);
+    }
+}
