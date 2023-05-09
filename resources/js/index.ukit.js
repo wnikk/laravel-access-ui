@@ -12,7 +12,7 @@ import './../css/main.ukit.css';
 import 'vue-multiselect/dist/vue3-multiselect.css';
 
 /*!
- * Laravel-access-ui (theme:ukit) v1.2.0
+ * Laravel-access-ui (theme:ukit) v1.3.4
  * (c) 2023 Nikolya May
  * Released under the MIT License.
  */

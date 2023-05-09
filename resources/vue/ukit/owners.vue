@@ -150,12 +150,12 @@ export default {
                         let typeName = typeof (item.type) !== 'undefined'?item.type:null;
                         typeName = typeof (types[typeName]) === 'undefined'?'#'+typeName:types[typeName];
                         exp.push({
-                            id: item.id?item.id:null,
-                            type: typeof(item.type) !== 'undefined'?item.type:null,
-                            typeName: typeName,
+                            id:          item.id?item.id:null,
+                            type:        typeof(item.type) !== 'undefined'?item.type:null,
+                            typeName:    typeName,
                             original_id: typeof(item.original_id) !== 'undefined'?item.original_id:null,
-                            name: item.name?item.name:null,
-                            created_at: item.created_at?item.created_at:null,
+                            name:        item.name?item.name:null,
+                            created_at:  item.created_at?new Date(item.created_at).toLocaleWithoutToday():null,
                         });
                     }
                     that.ownersList = exp;

@@ -82,9 +82,9 @@ export default {
             data.append('owner_id', owner_id);
 
             this.$http.request(url, {
-                method: fun,
+                method:  fun,
                 context: form,
-                data: JSON.stringify(Object.fromEntries(data)),
+                data:    JSON.stringify(Object.fromEntries(data)),
                 headers: {'Content-Type': 'application/json;charset=UTF-8'}
             })
                 .then((e) => {
@@ -150,7 +150,7 @@ export default {
                         typeName = typeof (types[typeName]) === 'undefined'?'#'+typeName:types[typeName];
                         exp.push({
                             id:          item.id?item.id:null,
-                            created_at:  item.created_at?item.created_at:null,
+                            created_at:  item.created_at?new Date(item.created_at).toLocaleString():null,
                             owner_id:    item.owner_id?item.owner_id:null,
                             type:        typeof(item.type) !== 'undefined'?item.type:null,
                             typeName:    typeName,

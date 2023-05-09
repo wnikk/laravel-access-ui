@@ -144,7 +144,7 @@
     text-align: right;
     overflow: hidden;
 }
-.accessUi-permissions-list .permission-item details[open] summary .badges {
+.accessUi-permissions-list .permission-item details[open] > summary > .badges {
     display: none;
 }
 
@@ -225,8 +225,8 @@
 .accessUi-rules-list .rule-item .list-child,
 .accessUi-permissions-list .permission-item .list-child {
     list-style-type: none;
-    margin: 0;
-    padding: 0 0 0 1.5rem;
+    margin: 1rem -2rem -1rem 0;
+    padding: 0;
 }
 .accessUi .icon {
     height: 24px;

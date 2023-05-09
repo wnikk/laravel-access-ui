@@ -41,7 +41,7 @@ export default {
     data() {
         return {
             VueVersion: Vue.version,
-            display: '',
+            display: 'Transition',
             components: {
                 rules:  Rules,
                 owners: Owners,
@@ -58,12 +58,13 @@ export default {
             if (owner) {
                 this.selectOwner(owner);
             }
-            if (typeof (this.components[name]) !== 'undefined') {
-                this.display = name;
+            if (typeof (this.components[name]) === 'undefined') {
+                console.error('Wrong component "'+name+'" name!');
+                return;
             }
             let objName = 'route'
-                + this.display.charAt(0).toUpperCase()
-                + this.display.slice(1);
+                + name.charAt(0).toUpperCase()
+                + name.slice(1);
             let routes = Object.assign({}, this[objName]);
             if(this.owner && routes) for (const i in routes) {
                 routes[i] = routes[i].replace(':owner:', this.owner);
@@ -71,10 +72,11 @@ export default {
             this.attrs = {};
             this.attrs[objName] = routes;
 
-            if (this.display === 'owners') {
+            if (name === 'owners') {
                 this.attrs.availableInherit    = this.availableInherit;
                 this.attrs.availablePermission = this.availablePermission;
             }
+            this.display = name;
         },
         selectOwner(id) {
             this.owner = id;
@@ -83,7 +85,7 @@ export default {
     computed: {
         startView()
         {
-            return this.components[this.display];
+            return this.components[this.display]??this.display;
         }
     },
     beforeMount () {

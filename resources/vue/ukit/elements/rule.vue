@@ -9,28 +9,30 @@
                   @cancel="cancelPopup()"
         ></ruleDelete>
 
-        <details v-if="displayInfo" :open=rule.opened class="info">
+        <details v-if="displayInfo" :open=rule.opened>
             <summary>{{ rule.title??rule.guard_name }}</summary>
-            <fieldset v-if="availableEdit || availableDelete">
-                <button v-if=availableEdit class="icon icon-edit" @click="editRule($event)"></button>
-                <button v-if=availableDelete class="icon icon-delete" @click="deleteRule($event)"></button>
-            </fieldset>
-            <article>
-                <p class="description">{{ rule.description }}</p>
-                <p class="options">{{ rule.guard_name }}</p>
-                <p v-if="rule.options" class="options">{{ rule.options }}</p>
-                <time>{{ rule.created_at }}</time>
-            </article>
+            <div class="info">
+                <fieldset v-if="availableEdit || availableDelete">
+                    <button v-if=availableEdit class="icon icon-edit" @click="editRule($event)"></button>
+                    <button v-if=availableDelete class="icon icon-delete" @click="deleteRule($event)"></button>
+                </fieldset>
+                <article>
+                    <time>{{ rule.created_at }}</time>
+                    <p class="description">{{ rule.description }}</p>
+                    <p class="options">{{ rule.guard_name }}</p>
+                    <p v-if="rule.options" class="options">{{ rule.options }}</p>
+                </article>
+            </div>
+            <ul v-if="rule.children && rule.children.length" class="list-child">
+                <rule v-for="child in rule.children"
+                      :rule=child
+                      :open=child.opened
+                      :className=className
+                      :availableEdit=availableEdit
+                      :availableDelete=availableDelete
+                ></rule>
+            </ul>
         </details>
-        <ul v-if="rule.children && rule.children.length" class="list-child">
-            <rule v-for="child in rule.children"
-                  :rule=child
-                  :open=child.opened
-                  :className=className
-                  :availableEdit=availableEdit
-                  :availableDelete=availableDelete
-            ></rule>
-        </ul>
     </li>
 </template>
 

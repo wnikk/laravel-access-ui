@@ -46,7 +46,7 @@ export default {
                 rules:  Rules,
                 owners: Owners,
                 inherit: Inherit,
-                permission: Permission
+                permission: Permission,
             },
             owner: 0,
             usePath: false,
