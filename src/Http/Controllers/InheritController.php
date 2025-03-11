@@ -55,7 +55,7 @@ class InheritController extends Controller
      */
     public function index(Request $request)
     {
-        if (!$this->owner->getKey()) $this->setOwnerFromRequest($request);
+        if (!$this->owner->getKey()) {$this->setOwnerFromRequest($request);}
 
         /** @var InheritanceContract */
         $inherit = $this->owner
@@ -94,7 +94,7 @@ class InheritController extends Controller
      *
      * @param $method
      * @param $parameters
-     * @return void
+     * @return mixed
      */
     public function callAction($method, $parameters)
     {
@@ -117,7 +117,7 @@ class InheritController extends Controller
      */
     public function store(Request $request)
     {
-        if (!$this->owner->getKey()) $this->setOwnerFromRequest($request);
+        if (!$this->owner->getKey()) {$this->setOwnerFromRequest($request);}
 
         $request->validate([
             'owner_id' => 'required|integer',
@@ -138,7 +138,7 @@ class InheritController extends Controller
      */
     public function destroy(Request $request)
     {
-        if (!$this->owner->getKey()) $this->setOwnerFromRequest($request);
+        if (!$this->owner->getKey()) {$this->setOwnerFromRequest($request);}
 
         $request->merge([
             'id' => $request->route('id')

@@ -33,7 +33,7 @@ class RulesController extends Controller
      *
      * @param $method
      * @param $parameters
-     * @return void
+     * @return mixed
      */
     public function callAction($method, $parameters)
     {

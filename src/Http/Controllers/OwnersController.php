@@ -44,7 +44,7 @@ class OwnersController extends Controller
         $type = $request->type;
         $type = (!$type||$type==='all')?null:$this->owner->getTypeID($type);
 
-        if (!$this->supportTypes){
+        if (!$this->supportTypes) {
             abort(403, 'Empty supportTypes');
         }
 
@@ -73,7 +73,7 @@ class OwnersController extends Controller
      *
      * @param $method
      * @param $parameters
-     * @return void
+     * @return mixed
      */
     public function callAction($method, $parameters)
     {

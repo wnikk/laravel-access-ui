@@ -75,7 +75,7 @@ class PermissionController extends Controller
      *
      * @param $method
      * @param $parameters
-     * @return void
+     * @return mixed
      */
     public function callAction($method, $parameters)
     {
@@ -100,7 +100,7 @@ class PermissionController extends Controller
      */
     public function index(Request $request, RuleContract $rule, AccessRulesContract $accessRules)
     {
-        if (!$this->owner->getKey()) $this->setOwnerFromRequest($request);
+        if (!$this->owner->getKey()) {$this->setOwnerFromRequest($request);}
 
         $accessRules->setOwner($this->owner);
 
@@ -150,7 +150,7 @@ class PermissionController extends Controller
             'permission' => 'required|boolean',
             'option'     => 'nullable',
         ]);
-        if (!$this->owner->getKey()) $this->setOwnerFromRequest($request);
+        if (!$this->owner->getKey()) {$this->setOwnerFromRequest($request);}
 
         /** @var RuleContract */
         $rule = $rule::findOrFail($request->id);
