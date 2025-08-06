@@ -2,12 +2,12 @@
 
 namespace Wnikk\LaravelAccessUi\Http\Controllers;
 
-use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Wnikk\LaravelAccessRules\Contracts\Rule as RuleContract;
+use Wnikk\LaravelAccessUi\Http\Controllers\BaseController;
 
-class RulesController extends Controller
+class RulesController extends BaseController
 {
     /**
      * Return all rules

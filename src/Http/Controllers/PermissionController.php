@@ -2,15 +2,15 @@
 
 namespace Wnikk\LaravelAccessUi\Http\Controllers;
 
-use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Wnikk\LaravelAccessRules\Contracts\AccessRules as AccessRulesContract;
 use Wnikk\LaravelAccessRules\Contracts\Owner as OwnerContract;
 use Wnikk\LaravelAccessRules\Contracts\Permission as PermissionContract;
 use Wnikk\LaravelAccessRules\Contracts\Rule as RuleContract;
+use Wnikk\LaravelAccessUi\Http\Controllers\BaseController;
 
-class PermissionController extends Controller
+class PermissionController extends BaseController
 {
     /**
      * Object of OwnerContract

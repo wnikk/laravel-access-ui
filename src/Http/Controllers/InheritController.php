@@ -2,13 +2,14 @@
 
 namespace Wnikk\LaravelAccessUi\Http\Controllers;
 
-use Illuminate\Routing\Controller;
+
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Wnikk\LaravelAccessRules\Contracts\Owner as OwnerContract;
 use Wnikk\LaravelAccessRules\Contracts\Inheritance as InheritanceContract;
+use Wnikk\LaravelAccessUi\Http\Controllers\BaseController;
 
-class InheritController extends Controller
+class InheritController extends BaseController
 {
     /**
      * Object of OwnerContract
