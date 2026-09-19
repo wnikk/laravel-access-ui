@@ -1,0 +1,144 @@
+
+.aj-notification {
+    background-color: rgba(255,0,0,0.7);
+    color: white;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+}
+.aj-notification .alert {
+    margin-bottom: 0;
+}
+.aj-notification a{
+    color: white;
+}
+.aj-notification .btn-detailed {
+    padding: 2px;
+    margin: 2px 10px;
+    cursor: pointer;
+    background: none;
+    border: 1px solid #000;
+    float: right;
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 1;
+    color: #000;
+    text-shadow: none;
+    opacity: 0.2;
+}
+.aj-notification .btn-detailed:hover,
+.aj-notification .btn-detailed:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.aj-error-report {
+    position: relative;
+    border: 1px solid silver;
+    margin: 0.5rem;
+    padding: 3px;
+    border-radius: 10px;
+    background-color: rgba(0,0,0,0.7);
+    color: white;text-align: left;
+    left: 10%;
+    width: 80%;
+}
+.aj-error-response {
+    background-color: white;
+    color: black;
+}
+.aj-error-response > textarea,
+.aj-error-response > .aj-error-response-iframe{
+    width: 100%;
+    min-height: 300px;
+}
+.aj-error-report .btn-detailed{
+    border: 1px solid #FFF;
+    color: #FFF;
+    background-color: #777;
+}
+
+.aj-loader-parent{
+    min-width: 48px;
+    min-height: 48px;
+    position: absolute;
+    white-space: nowrap;
+    text-align: center;
+    border-radius: 10px;
+    background-color: rgba(255,255,255,0.5);
+    border: 1px solid #30D5C8;
+    z-index: 99999;
+    margin: -10px 0 0 -10px;
+}
+.aj-loader-parent:before {
+    height: 100%;
+    display: inline-block;
+    vertical-align: middle;
+    content: '';
+}
+.aj-loader-element {
+    display: inline-block;
+    white-space: normal;
+    vertical-align: middle;
+    text-align: left;
+}
+
+.aj-loader-element {
+    position: relative;
+    margin: 0 auto;
+    max-width: 64px;
+    max-height: 64px;
+    min-width: 48px;
+    min-height: 48px;
+    width: 100%;
+    height: 100%;
+}
+
+.aj-loader-element .aj-circular {
+    animation: aj-rotate 2s linear infinite;
+    height: 100%;
+    transform-origin: center center;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    background: transparent;
+}
+
+.aj-loader-element .aj-circular > .path {
+    stroke-dasharray: 1,200;
+    stroke-dashoffset: 0;
+    -webkit-animation: aj-dash 1.5s ease-in-out infinite;
+    animation: aj-dash 1.5s ease-in-out infinite;
+    stroke: #30D5C8;
+}
+
+@-webkit-keyframes aj-rotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes rotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+@keyframes aj-dash {
+    0% {
+        stroke-dasharray: 1,200;
+        stroke-dashoffset: 0;
+    }
+    50% {
+        stroke-dasharray: 89,200;
+        stroke-dashoffset: -35;
+    }
+    100% {
+        stroke-dasharray: 89,200;
+        stroke-dashoffset: -124;
+    }
+}

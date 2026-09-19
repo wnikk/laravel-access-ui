@@ -1,0 +1,1075 @@
+/*!
+ * Laravel Access UI — styles
+ *
+ * Written to drop into an application that already has a CSS framework, or none.
+ *
+ * Three rules keep it out of the way:
+ *
+ *   1. Every class is prefixed `wacu-`, and no selector names a bare element outside `.wacu-root`. The
+ *      prefix is deliberately awkward: `acu-` and `ac-` are taken often enough that a collision is a
+ *      matter of time, and a collision here means somebody else's button styling landing on a screen
+ *      that hands out permissions.
+ *   2. Everything is scoped under `.wacu-root`, which the bundle puts on each mount point. A host's own
+ *      rules can still reach in — specificity is not a wall — so the properties that decide whether the
+ *      interface is legible (font, colour, box-sizing, button and input appearance) are stated rather
+ *      than inherited.
+ *   3. Colour, spacing and radius come from custom properties. Overriding those is the supported way to
+ *      make this look like the rest of an admin area, and it needs no build step:
+ *
+ *          .wacu-root { --wacu-accent: #6d28d9; --wacu-radius: 2px; }
+ *
+ * Light and dark: automatic by default, following `prefers-color-scheme`. To force one, put
+ * `wacu-light` or `wacu-dark` either on the mount point — which is what `theme` in config/accessUi.php
+ * does for you — or on any ancestor, so a host that already toggles its own theme by class on <html>
+ * gets this along for the ride. Put a class on one or the other, not opposing ones on both.
+ */
+
+/* ----------------------------------------------------------------- Tokens */
+
+.wacu-root {
+    --wacu-bg: #ffffff;
+    --wacu-bg-soft: #f6f7f9;
+    --wacu-bg-hover: #eef1f5;
+    --wacu-border: #dee2e6;
+    --wacu-border-strong: #c0c7cf;
+    --wacu-text: #1d2530;
+    --wacu-text-soft: #5d6a7a;
+    --wacu-accent: #0d6efd;
+    --wacu-accent-text: #ffffff;
+    --wacu-on: #146c43;
+    --wacu-on-bg: #d1e7dd;
+    --wacu-no: #b02a37;
+    --wacu-no-bg: #f8d7da;
+    --wacu-warn: #997404;
+    --wacu-warn-bg: #fff3cd;
+    --wacu-shade: rgba(12, 16, 22, 0.55);
+    --wacu-veil: rgba(255, 255, 255, 0.6);
+
+    --wacu-radius: 6px;
+    --wacu-gap: 0.75rem;
+    --wacu-font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --wacu-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    color: var(--wacu-text);
+    font-family: var(--wacu-font);
+    font-size: 14px;
+    line-height: 1.45;
+    text-align: left;
+}
+
+@media (prefers-color-scheme: dark) {
+    .wacu-root {
+        --wacu-bg: #171a1f;
+        --wacu-bg-soft: #1f242b;
+        --wacu-bg-hover: #262c35;
+        --wacu-border: #333b45;
+        --wacu-border-strong: #4a545f;
+        --wacu-text: #e7ebf0;
+        --wacu-text-soft: #9aa6b4;
+        --wacu-accent: #3b82f6;
+        --wacu-accent-text: #ffffff;
+        --wacu-on: #75b798;
+        --wacu-on-bg: #143523;
+        --wacu-no: #ea868f;
+        --wacu-no-bg: #3b1a1d;
+        --wacu-warn: #ffda6a;
+        --wacu-warn-bg: #332701;
+        --wacu-shade: rgba(0, 0, 0, 0.66);
+        --wacu-veil: rgba(10, 13, 17, 0.6);
+    }
+}
+
+/* Forced light: has to beat the media query above, hence the repetition. */
+.wacu-light .wacu-root,
+.wacu-root.wacu-light {
+    --wacu-bg: #ffffff;
+    --wacu-bg-soft: #f6f7f9;
+    --wacu-bg-hover: #eef1f5;
+    --wacu-border: #dee2e6;
+    --wacu-border-strong: #c0c7cf;
+    --wacu-text: #1d2530;
+    --wacu-text-soft: #5d6a7a;
+    --wacu-accent: #0d6efd;
+    --wacu-accent-text: #ffffff;
+    --wacu-on: #146c43;
+    --wacu-on-bg: #d1e7dd;
+    --wacu-no: #b02a37;
+    --wacu-no-bg: #f8d7da;
+    --wacu-warn: #997404;
+    --wacu-warn-bg: #fff3cd;
+    --wacu-shade: rgba(12, 16, 22, 0.55);
+    --wacu-veil: rgba(255, 255, 255, 0.6);
+}
+
+/* Forced dark. */
+.wacu-dark .wacu-root,
+.wacu-root.wacu-dark {
+    --wacu-bg: #171a1f;
+    --wacu-bg-soft: #1f242b;
+    --wacu-bg-hover: #262c35;
+    --wacu-border: #333b45;
+    --wacu-border-strong: #4a545f;
+    --wacu-text: #e7ebf0;
+    --wacu-text-soft: #9aa6b4;
+    --wacu-accent: #3b82f6;
+    --wacu-accent-text: #ffffff;
+    --wacu-on: #75b798;
+    --wacu-on-bg: #143523;
+    --wacu-no: #ea868f;
+    --wacu-no-bg: #3b1a1d;
+    --wacu-warn: #ffda6a;
+    --wacu-warn-bg: #332701;
+    --wacu-shade: rgba(0, 0, 0, 0.66);
+    --wacu-veil: rgba(10, 13, 17, 0.6);
+}
+
+.wacu-root *,
+.wacu-root *::before,
+.wacu-root *::after {
+    box-sizing: border-box;
+}
+
+.wacu-root :focus-visible {
+    outline: 2px solid var(--wacu-accent);
+    outline-offset: 1px;
+}
+
+/* The standalone page, when no host layout was named. */
+.wacu-page {
+    margin: 0;
+    padding: 1.5rem;
+    background: #f1f3f6;
+}
+
+@media (prefers-color-scheme: dark) {
+    .wacu-page {
+        background: #0f1216;
+    }
+}
+
+.wacu-light .wacu-page,
+.wacu-page.wacu-light {
+    background: #f1f3f6;
+}
+
+.wacu-dark .wacu-page,
+.wacu-page.wacu-dark {
+    background: #0f1216;
+}
+
+/* ----------------------------------------------------------------- Layout */
+
+.wacu-app {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.wacu-app-head {
+    margin-bottom: 1rem;
+}
+
+.wacu-app-title {
+    margin: 0 0 0.25rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.wacu-app-tabs {
+    margin-bottom: 1rem;
+}
+
+.wacu-screen-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--wacu-gap);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--wacu-border);
+}
+
+.wacu-screen-title {
+    margin: 0 0 0.15rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.wacu-foot-note {
+    margin: 0.75rem 0 0;
+}
+
+/* Two panes side by side, stacking on a narrow screen. */
+.wacu-split {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: var(--wacu-gap);
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .wacu-split {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* ----------------------------------------------------------------- Cards */
+
+.wacu-card {
+    /* httpUi draws its loading overlay as an absolutely positioned child, so a card has to be the thing
+       it is positioned against. Without this the spinner covers the page. */
+    position: relative;
+    background: var(--wacu-bg);
+    border: 1px solid var(--wacu-border);
+    border-radius: var(--wacu-radius);
+}
+
+.wacu-card-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--wacu-gap);
+    padding: 0.6rem 0.75rem;
+    background: var(--wacu-bg-soft);
+    border-bottom: 1px solid var(--wacu-border);
+    border-radius: var(--wacu-radius) var(--wacu-radius) 0 0;
+}
+
+.wacu-card-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* ----------------------------------------------------------------- Tables */
+
+.wacu-table-wrap {
+    overflow-x: auto;
+}
+
+.wacu-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--wacu-bg);
+}
+
+.wacu-table th,
+.wacu-table td {
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--wacu-border);
+}
+
+.wacu-table th {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--wacu-text-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    background: var(--wacu-bg-soft);
+}
+
+.wacu-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.wacu-table tbody tr:hover {
+    background: var(--wacu-bg-hover);
+}
+
+.wacu-col-wide {
+    min-width: 20rem;
+}
+
+.wacu-col-narrow {
+    width: 9rem;
+}
+
+.wacu-col-actions {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.wacu-center {
+    text-align: center;
+}
+
+.wacu-right {
+    text-align: right;
+}
+
+.wacu-nowrap {
+    white-space: nowrap;
+}
+
+/* A deactivated rule: still there, still holding permissions, no longer answering yes. */
+.wacu-row-off > td {
+    opacity: 0.55;
+}
+
+/* An indirect assignment: a consequence of another row rather than something set here. The hatching
+   survives a colour change and a screenshot, which a faint tint does not. */
+.wacu-row-soft {
+    background-image: repeating-linear-gradient(
+        135deg,
+        transparent 0,
+        transparent 6px,
+        var(--wacu-bg-soft) 6px,
+        var(--wacu-bg-soft) 12px
+    );
+}
+
+/* ----------------------------------------------------------------- Text */
+
+.wacu-muted {
+    margin: 0;
+    color: var(--wacu-text-soft);
+}
+
+.wacu-sub {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--wacu-text-soft);
+}
+
+.wacu-hint {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.78rem;
+    color: var(--wacu-text-soft);
+}
+
+.wacu-empty {
+    margin: 0;
+    padding: 2rem 0.75rem;
+    color: var(--wacu-text-soft);
+    text-align: center;
+}
+
+.wacu-code {
+    padding: 0.05em 0.3em;
+    font-family: var(--wacu-mono);
+    font-size: 0.82rem;
+    word-break: break-all;
+    background: var(--wacu-bg-soft);
+    border: 1px solid var(--wacu-border);
+    border-radius: 3px;
+}
+
+.wacu-tree {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.wacu-tree-mark {
+    color: var(--wacu-text-soft);
+}
+
+/* ----------------------------------------------------------------- Notices */
+
+.wacu-notices {
+    margin-bottom: 0.75rem;
+}
+
+.wacu-notices:empty {
+    display: none;
+}
+
+.wacu-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin: 0 0 1rem;
+    padding: 0.6rem 0.75rem;
+    color: var(--wacu-text-soft);
+    background: var(--wacu-bg-soft);
+    border: 1px solid var(--wacu-border);
+    border-radius: var(--wacu-radius);
+}
+
+.wacu-notice-warn {
+    color: var(--wacu-warn);
+    background: var(--wacu-warn-bg);
+    border-color: var(--wacu-warn);
+}
+
+/* ----------------------------------------------------------------- Tags */
+
+.wacu-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.05rem 0.45rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    background: var(--wacu-bg-soft);
+    border: 1px solid var(--wacu-border);
+    border-radius: 999px;
+}
+
+.wacu-tag-on {
+    color: var(--wacu-on);
+    background: var(--wacu-on-bg);
+    border-color: var(--wacu-on);
+}
+
+.wacu-tag-no {
+    color: var(--wacu-no);
+    background: var(--wacu-no-bg);
+    border-color: var(--wacu-no);
+}
+
+.wacu-tag-off {
+    margin-left: 0.4rem;
+    color: var(--wacu-text-soft);
+}
+
+/* Dashed edge marks "this arrived from somewhere else". */
+.wacu-tag-inherited {
+    border-style: dashed;
+}
+
+.wacu-count {
+    display: inline-block;
+    min-width: 1.7rem;
+    padding: 0.05rem 0.4rem;
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    background: var(--wacu-bg-soft);
+    border: 1px solid var(--wacu-border);
+    border-radius: 999px;
+}
+
+.wacu-count-on {
+    color: var(--wacu-on);
+    background: var(--wacu-on-bg);
+    border-color: var(--wacu-on);
+}
+
+/* ----------------------------------------------------------------- Figures */
+
+/* The widget's numbers: big, few, and not a list of rules. */
+.wacu-figures {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--wacu-gap);
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--wacu-border);
+}
+
+.wacu-figure {
+    min-width: 5.5rem;
+}
+
+.wacu-figure-value {
+    display: block;
+    font-size: 1.35rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+}
+
+.wacu-figure-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--wacu-text-soft);
+}
+
+/* ----------------------------------------------------------------- Chips */
+
+.wacu-chips {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.wacu-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.1rem 0.45rem;
+    font: inherit;
+    font-size: 0.78rem;
+    color: inherit;
+    cursor: pointer;
+    background: var(--wacu-bg-soft);
+    border: 1px solid var(--wacu-border);
+    border-radius: 999px;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.wacu-chip:disabled {
+    cursor: default;
+}
+
+.wacu-chip-on {
+    color: var(--wacu-on);
+    background: var(--wacu-on-bg);
+    border-color: var(--wacu-on);
+}
+
+.wacu-chip-no {
+    color: var(--wacu-no);
+    background: var(--wacu-no-bg);
+    border-color: var(--wacu-no);
+}
+
+/* ----------------------------------------------------------------- Buttons */
+
+.wacu-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.32rem 0.6rem;
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--wacu-text);
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    background: var(--wacu-bg);
+    border: 1px solid var(--wacu-border-strong);
+    border-radius: var(--wacu-radius);
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.wacu-btn + .wacu-btn {
+    margin-left: 0.25rem;
+}
+
+.wacu-btn:hover:not(:disabled) {
+    background: var(--wacu-bg-hover);
+}
+
+.wacu-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.wacu-btn-primary {
+    color: var(--wacu-accent-text);
+    background: var(--wacu-accent);
+    border-color: var(--wacu-accent);
+}
+
+.wacu-btn-primary:hover:not(:disabled) {
+    background: var(--wacu-accent);
+    filter: brightness(1.08);
+}
+
+.wacu-btn-danger {
+    color: var(--wacu-no);
+    border-color: var(--wacu-no);
+}
+
+.wacu-btn-danger:hover:not(:disabled) {
+    background: var(--wacu-no-bg);
+}
+
+/* The two pressed states of the permission matrix. */
+.wacu-btn-on {
+    color: var(--wacu-on);
+    background: var(--wacu-on-bg);
+    border-color: var(--wacu-on);
+}
+
+.wacu-btn-no {
+    color: var(--wacu-no);
+    background: var(--wacu-no-bg);
+    border-color: var(--wacu-no);
+}
+
+.wacu-btn-row {
+    display: inline-flex;
+    gap: 0.25rem;
+}
+
+.wacu-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    color: var(--wacu-text-soft);
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+    border-radius: var(--wacu-radius);
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.wacu-icon-btn:hover {
+    color: var(--wacu-text);
+    background: var(--wacu-bg-hover);
+}
+
+.wacu-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-bottom: 0.3rem;
+    padding: 0;
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--wacu-accent);
+    cursor: pointer;
+    background: none;
+    border: 0;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.wacu-link:hover {
+    text-decoration: underline;
+}
+
+.wacu-icon {
+    flex: none;
+    width: 1em;
+    height: 1em;
+}
+
+/* ----------------------------------------------------------------- Tabs */
+
+.wacu-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.wacu-tab {
+    padding: 0.32rem 0.7rem;
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--wacu-text-soft);
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--wacu-radius);
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.wacu-tab:hover {
+    color: var(--wacu-text);
+    background: var(--wacu-bg-hover);
+}
+
+.wacu-tab-on {
+    color: var(--wacu-text);
+    background: var(--wacu-bg);
+    border-color: var(--wacu-border-strong);
+}
+
+/* ----------------------------------------------------------------- Forms */
+
+.wacu-input {
+    width: 100%;
+    padding: 0.35rem 0.5rem;
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--wacu-text);
+    background: var(--wacu-bg);
+    border: 1px solid var(--wacu-border-strong);
+    border-radius: var(--wacu-radius);
+}
+
+.wacu-input:focus {
+    border-color: var(--wacu-accent);
+}
+
+.wacu-field {
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.wacu-label {
+    display: block;
+    margin-bottom: 0.2rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--wacu-text-soft);
+}
+
+.wacu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 0 var(--wacu-gap);
+}
+
+.wacu-field-full {
+    grid-column: 1 / -1;
+}
+
+.wacu-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    color: var(--wacu-text-soft);
+    cursor: pointer;
+}
+
+.wacu-search {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 12rem;
+    max-width: 20rem;
+    padding: 0 0.5rem;
+    color: var(--wacu-text-soft);
+    background: var(--wacu-bg);
+    border: 1px solid var(--wacu-border-strong);
+    border-radius: var(--wacu-radius);
+}
+
+.wacu-search .wacu-input {
+    padding-left: 0;
+    border: 0;
+}
+
+.wacu-search .wacu-input:focus {
+    outline: none;
+}
+
+/* ----------------------------------------------------------------- Modal */
+
+.wacu-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem;
+    overflow-y: auto;
+    background: var(--wacu-shade);
+}
+
+.wacu-modal-box {
+    width: 100%;
+    max-width: 30rem;
+    background: var(--wacu-bg);
+    border: 1px solid var(--wacu-border);
+    border-radius: var(--wacu-radius);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.wacu-modal-box-wide {
+    max-width: 46rem;
+}
+
+.wacu-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--wacu-gap);
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--wacu-border);
+}
+
+.wacu-modal-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.wacu-modal-body {
+    padding: 0.85rem 0.75rem;
+}
+
+.wacu-modal-foot {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.4rem;
+    padding: 0.6rem 0.75rem;
+    background: var(--wacu-bg-soft);
+    border-top: 1px solid var(--wacu-border);
+    border-radius: 0 0 var(--wacu-radius) var(--wacu-radius);
+}
+
+/* ----------------------------------------------------------------- Picker */
+
+.wacu-picker-list {
+    position: relative;
+    max-height: 20rem;
+    overflow-y: auto;
+    border: 1px solid var(--wacu-border);
+    border-radius: var(--wacu-radius);
+}
+
+.wacu-picker-row {
+    display: block;
+    width: 100%;
+    padding: 0.45rem 0.6rem;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--wacu-border);
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.wacu-picker-row:last-child {
+    border-bottom: 0;
+}
+
+.wacu-picker-row:hover {
+    background: var(--wacu-bg-hover);
+}
+
+.wacu-picker-title {
+    display: block;
+}
+
+.wacu-picker-hint {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--wacu-text-soft);
+}
+
+.wacu-picker-count {
+    margin-right: auto;
+    font-size: 0.8rem;
+}
+
+/* ----------------------------------------------------------------- Owner list */
+
+/* The left pane of the inheritance screen. */
+.wacu-list {
+    max-height: 32rem;
+    overflow-y: auto;
+}
+
+.wacu-list-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.45rem 0.75rem;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--wacu-border);
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.wacu-list-row:last-child {
+    border-bottom: 0;
+}
+
+.wacu-list-row:hover {
+    background: var(--wacu-bg-hover);
+}
+
+.wacu-list-row-on {
+    color: var(--wacu-accent-text);
+    background: var(--wacu-accent);
+}
+
+.wacu-list-row-on:hover {
+    background: var(--wacu-accent);
+    filter: brightness(1.08);
+}
+
+.wacu-list-row-on .wacu-tag,
+.wacu-list-row-on .wacu-count {
+    color: var(--wacu-text);
+    background: var(--wacu-bg);
+    border-color: var(--wacu-bg);
+}
+
+.wacu-list-main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+/* ----------------------------------------------------------------- Assignment */
+
+.wacu-assign {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 0.75rem;
+}
+
+.wacu-assign .wacu-input {
+    flex: 1 1 14rem;
+    width: auto;
+    min-width: 12rem;
+}
+
+.wacu-assign-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.wacu-assign-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--wacu-gap);
+    padding: 0.45rem 0.75rem;
+    border-bottom: 1px solid var(--wacu-border);
+}
+
+.wacu-assign-item:last-child {
+    border-bottom: 0;
+}
+
+.wacu-assign-main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+}
+
+.wacu-assign-name {
+    font-weight: 500;
+}
+
+/* ----------------------------------------------------------------- Widget */
+
+.wacu-widget-root {
+    display: block;
+}
+
+.wacu-widget-compact .wacu-assign-item {
+    padding: 0.3rem 0.6rem;
+}
+
+.wacu-widget-compact .wacu-card-head,
+.wacu-widget-compact .wacu-assign,
+.wacu-widget-compact .wacu-figures {
+    padding: 0.4rem 0.6rem;
+}
+
+/* ----------------------------------------------------------------- Toasts */
+
+.wacu-toasts {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 2147483100;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    max-width: 24rem;
+    pointer-events: none;
+}
+
+.wacu-toasts:empty {
+    display: none;
+}
+
+.wacu-toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    padding: 0.5rem 0.6rem;
+    color: var(--wacu-on);
+    pointer-events: auto;
+    background: var(--wacu-bg);
+    border: 1px solid var(--wacu-on);
+    border-left-width: 4px;
+    border-radius: var(--wacu-radius);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+
+.wacu-toast-text {
+    flex: 1 1 auto;
+}
+
+/* -----------------------------------------------------------------
+   httpUi, dressed to match
+
+   httpUi brings its own markup for loaders and error boxes, under its own `aj-` prefix. Its stylesheet
+   ships with this bundle, and what follows only adjusts the parts that would otherwise look borrowed:
+   its default alert is red regardless of kind, and it expects Bootstrap's `.alert` to supply the box.
+
+   Scoped to `.wacu-notices` and `.wacu-card`, so a host already using httpUi elsewhere on the page keeps
+   its own appearance.
+   ----------------------------------------------------------------- */
+
+.wacu-notices .aj-notification {
+    margin-bottom: 0.5rem;
+    color: var(--wacu-no);
+    background: var(--wacu-no-bg);
+    border: 1px solid var(--wacu-no);
+    border-left-width: 4px;
+    border-radius: var(--wacu-radius);
+}
+
+.wacu-notices .aj-notification .alert {
+    margin: 0;
+    padding: 0.5rem 0.6rem;
+}
+
+.wacu-notices .aj-notification .alert-success {
+    color: var(--wacu-on);
+}
+
+.wacu-notices .aj-notification a {
+    color: inherit;
+}
+
+.wacu-notices .aj-notification ul {
+    margin: 0.3rem 0 0;
+    padding-left: 1.1rem;
+}
+
+.wacu-notices .aj-notification .btn-close {
+    padding: 0 0.3rem;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+}
+
+.wacu-notices .aj-notification .btn-close::before {
+    content: "\00d7";
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.wacu-card > .aj-loader-parent,
+.wacu-picker-list > .aj-loader-parent,
+.wacu-list > .aj-loader-parent {
+    background: var(--wacu-veil);
+    border-color: var(--wacu-accent);
+    border-radius: var(--wacu-radius);
+}
+
+.wacu-card > .aj-loader-parent .aj-circular > .path,
+.wacu-picker-list > .aj-loader-parent .aj-circular > .path,
+.wacu-list > .aj-loader-parent .aj-circular > .path {
+    stroke: var(--wacu-accent);
+}

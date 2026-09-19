@@ -2,175 +2,169 @@
 
 namespace Wnikk\LaravelAccessUi\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Wnikk\LaravelAccessRules\Contracts\AccessRules as AccessRulesContract;
 use Wnikk\LaravelAccessRules\Contracts\Owner as OwnerContract;
-use Wnikk\LaravelAccessUi\Http\Controllers\BaseController;
 
+/**
+ * Owners: the rows that can hold permissions.
+ *
+ * Which types are listed by default is configuration (`entities`), but two things happen regardless of
+ * it. Any owner holding a permission or a prohibition appears here whatever its type — a grant made
+ * straight to one account is otherwise invisible on a screen listing only roles, and an administrator
+ * who cannot see it cannot revoke it. And any listed row can be renamed or deleted, because this screen
+ * works on the owner table and nothing else: deleting a user's owner row takes away their permissions
+ * and assignments, not the user.
+ *
+ * Creating is the one thing `entities` gates, and only because the two cases differ. A role exists
+ * because somebody made it here. A user's owner row appears the first time the application touches
+ * them, so typing one by hand would invite a typo that holds permissions and belongs to nobody.
+ */
 class OwnersController extends BaseController
 {
-    /**
-     * Object of OwnerContract
-     *
-     * @var OwnerContract
-     */
-    protected $owner;
+    /** @var string */
+    protected $screen = 'owners';
 
     /**
-     * List of all accompanied types of owners
-     *
-     * @var array <int, string>
-     */
-    protected $supportTypes = [];
-
-    /**
-     * Establishes a list of all accompanied types of owners
-     *
-     * @return void
-     */
-    public function setSupportTypes(array $types)
-    {
-        $this->supportTypes = $types?array_map('strval', $types):[];
-    }
-
-    /**
-     * Return all or selected type owner
+     * Owners, with enough counts to tell which ones matter.
      *
      * @param Request $request
-     * @return array
+     * @return JsonResponse
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $type = $request->type;
-        $type = (!$type||$type==='all')?null:$this->owner->getTypeID($type);
+        $request->validate(['entity' => ['nullable', 'string', 'max:64']]);
 
-        if (!$this->supportTypes) {
-            abort(403, 'Empty supportTypes');
+        $entityKey = (string) $request->input('entity', '');
+        $query     = $this->ui->listedOwnerQuery();
+
+        // Filtering by entity narrows to that type exactly, unlisted permission holders included or
+        // not according to whether their type is the one asked for.
+        if ($entityKey !== '' && $entityKey !== 'all') {
+            $query = $this->ui->allOwnerQuery()->where('type', $this->ui->entity($entityKey)['type_id']);
         }
 
-        if (!$type) {
-            $select = $this->owner::whereIn('type', array_keys($this->supportTypes));
-        } else {
-            if (!in_array($type, array_keys($this->supportTypes))) {
-                abort(403, 'Type of owner not find in supportTypes');
-            }
-            $select = $this->owner::where('type', $type);
-        }
+        $rows = $query
+            ->withCount([
+                'permission as permissions_count',
+                'inheritance as sources_count',
+                'inheritanceParent as inheritors_count',
+            ])
+            ->orderBy('name')
+            ->get();
 
-        return [
-            'success' => true,
-            'list'    => $select
-                ->get([
-                    'id', 'type', 'created_at',
-                    'name', 'original_id',
-                ])->toArray(),
-            'types' => array_map('basename', $this->supportTypes),
-        ];
-    }
+        $list = $rows->map(function ($row) {
+            return $this->ui->presentOwner($row, [
+                'permissions_count' => (int) $row->permissions_count,
+                'sources_count'     => (int) $row->sources_count,
+                'inheritors_count'  => (int) $row->inheritors_count,
+            ]);
+        })->values();
 
-    /**
-     * Check access to Controller action
-     *
-     * @param $method
-     * @param $parameters
-     * @return mixed
-     */
-    public function callAction($method, $parameters)
-    {
-        if (!config('accessUi.grid_owners')) {
-            abort(403);
-        }
-
-        $this->owner = app(OwnerContract::class);
-        if (!$this->supportTypes) {
-            $this->setSupportTypes($this->owner->getListTypes());
-        }
-
-        return parent::callAction($method, $parameters);
-    }
-
-    /**
-     *  Save new owner
-     *
-     * @param Request $request
-     * @return array
-     */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'type'        => 'required|integer|in:'.implode(',', array_keys($this->supportTypes)),
-            'original_id' => 'nullable',
-            'name'        => 'nullable|string',
+        return $this->ok('', [
+            'list'  => $list,
+            'write' => $this->ui->screenWritable('owners'),
         ]);
-        $type = $this->owner->getTypeID($request->type);
+    }
 
-        $check = $this->owner->where('type', $type)
-            ->where('original_id', $request->original_id)
-            ->first();
+    /**
+     * Create an owner row of a type the configuration lets the panel create.
+     *
+     * The identifier is asked for separately from the name because they are different things: the
+     * identifier is the stable machine name migrations and seeders refer to, the name is what
+     * administrators read and may change freely.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'entity'      => ['required', 'string', 'max:64'],
+            'original_id' => ['required', 'string', 'max:64'],
+            'name'        => ['nullable', 'string', 'max:128'],
+        ]);
 
-        if ($check) return [
-            'success' => false,
-            'message' => 'This owner already exists.',
-        ];
+        $entity = $this->ui->entity($data['entity']);
 
-        $owner = $this->owner::create(
-            $request->only(['type', 'original_id', 'name'])
+        if (!$entity['create']) {
+            return $this->err(
+                __(':entity records appear on their own; the panel does not create them.', [
+                    'entity' => __($entity['label']),
+                ]),
+                [],
+                403
+            );
+        }
+
+        $existing = app(OwnerContract::class)->findOwner($entity['type_id'], $data['original_id']);
+
+        if ($existing) {
+            return $this->err(__('This owner already exists.'), [
+                'original_id' => [__('This owner already exists.')],
+            ], 409);
+        }
+
+        $created = app(AccessRulesContract::class)->newOwner(
+            $entity['type'],
+            $data['original_id'],
+            ($data['name'] ?? '') === '' ? $data['original_id'] : $data['name']
         );
 
-        return [
-            'success' => !!$owner->save(),
-        ];
+        if (!$created) {
+            return $this->err(__('The owner could not be created.'), [], 500);
+        }
+
+        $this->ui->flushCache();
+
+        return $this->ok(__(':entity created', ['entity' => __($entity['single'])]));
     }
 
     /**
-     * Update owner name
+     * Rename an owner.
+     *
+     * The name only. `original_id` is what seeders, migrations and application code refer to, so
+     * changing it here would quietly break whatever points at it.
      *
      * @param Request $request
-     * @return array
+     * @param int|string $owner
+     * @return JsonResponse
      */
-    public function update(Request $request)
+    public function update(Request $request, $owner): JsonResponse
     {
-        $request->validate([
-            'id'   => 'required|integer',
-            'name' => 'nullable|string',
-            'original_id' => 'nullable',
+        $record = $this->owner($owner);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:128'],
         ]);
 
-        $owner = $this->owner::findOrFail($request->id);
+        $record->update(['name' => $data['name']]);
+        $this->ui->flushCache();
 
-        $owner->update(
-            $request->only(['name', 'original_id'])
-        );
-
-        return [
-            'success' => !!$owner->save(),
-        ];
+        return $this->ok(__('Owner renamed'));
     }
 
     /**
-     * Delete owner
+     * Delete an owner row, and with it everything it held.
      *
-     * @param Request $request
-     * @return array
+     * access-rules cascades: the owner's permissions go, its inheritance links go in both directions,
+     * and everyone who inherited from it loses what it held. The row in your own tables — the user, the
+     * team, whatever it stood for — is untouched; this is the access record, not the thing itself.
+     *
+     * Not reversible, which is why the interface asks first.
+     *
+     * @param int|string $owner
+     * @return JsonResponse
      */
-    public function destroy(Request $request)
+    public function destroy($owner): JsonResponse
     {
-        $request->merge(['id' => $request->route('id')]);
-        $request->validate([
-            'id' => 'required|integer',
-        ]);
+        $record = $this->owner($owner);
+        $title  = $this->ui->presentOwner($record)['title'];
 
-        $owner = $this->owner::findOrFail($request->id);
+        $record->delete();
+        $this->ui->flushCache();
 
-
-        $relation = [
-            'inheritance' => $owner->inheritance()->delete(),
-            'parent'      => $owner->inheritanceParent()->delete(),
-            'permission' => $owner->permission()->delete(),
-        ];
-        return [
-            'success' => !!$owner->delete(),
-            'count'   => $relation,
-        ];
+        return $this->ok(__(':name deleted', ['name' => $title]));
     }
 }

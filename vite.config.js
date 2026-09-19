@@ -1,50 +1,57 @@
 import { defineConfig } from 'vite';
 import vuePlugin from '@vitejs/plugin-vue';
 
+/**
+ * One entry in, two files out: dist/accessUi.js and dist/accessUi.css.
+ *
+ * Built as an IIFE rather than an ES module so a page can load it with a plain `<script src>` — no
+ * `type="module"`, no import map, nothing for a host application's asset pipeline to agree with. The
+ * bundle assigns `window.accessUi` itself, which is why `output.name` is absent: Rollup would declare
+ * a second global for the module's exports, and there are none to declare.
+ *
+ * Everything is bundled in, Vue included. That is deliberate: the panel has to work on a machine with
+ * no route to the internet, so nothing may be left to a CDN at runtime.
+ */
 export default defineConfig({
     build: {
-        //manifest: false,
-        //minify: false,
-        //target: 'es2020',
-        outDir: './dist',
+        outDir: 'dist',
         emptyOutDir: true,
         assetsDir: '.',
+
+        // One stylesheet for one entry, named after it rather than the `style.css` default.
+        cssCodeSplit: false,
+
+        // es2020 covers optional chaining and nullish coalescing as-is; the class fields and private
+        // methods in the vendored httpUi are lowered by esbuild.
+        target: 'es2020',
+        sourcemap: false,
+
         rollupOptions: {
-            input: [
-                //'./resources/js/accessUi.ukit.js'
-                './resources/js/accessUi.bt.js'
-            ],
+            input: 'resources/js/accessUi.js',
             output: {
-                assetFileNames: '[name].[ext]',
-                chunkFileNames: '[name]-[hash].js',
-                entryFileNames: '[name].js',
+                format: 'iife',
+
+                // A single file, so a `<script>` tag is the entire integration.
+                inlineDynamicImports: true,
+
+                entryFileNames: 'accessUi.js',
+                chunkFileNames: 'accessUi-[name].js',
+                assetFileNames: 'accessUi.[ext]',
             },
         },
     },
+
     plugins: [
         vuePlugin({
             template: {
                 transformAssetUrls: {
-                    // The Vue plugin will re-write asset URLs, when referenced
-                    // in Single File Components, to point to the Laravel web
-                    // server. Setting this to `null` allows the Laravel plugin
-                    // to instead re-write asset URLs to point to the Vite
-                    // server instead.
+                    // No asset URLs are referenced from components — the icons are inline paths — so
+                    // there is nothing to rewrite, and rewriting would only invent a base path the
+                    // host never agreed to.
                     base: null,
-
-                    // The Vue plugin will parse absolute URLs and treat them
-                    // as absolute paths to files on disk. Setting this to
-                    // `false` will leave absolute URLs un-touched so they can
-                    // reference assets in the public directory as expected.
-                    //includeAbsolute: false,
-                    includeAbsolute: true,
+                    includeAbsolute: false,
                 },
             },
         }),
     ],
-    resolve: {
-        alias: {
-            '@': './resources/vue',
-        }
-    },
 });

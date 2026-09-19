@@ -1,7 +1,7 @@
 {
     "name": "laravel-access-ui",
-    "version": "1.3.8",
-    "description": "User Interface for simple access rights.",
+    "version": "2.0.0",
+    "description": "Framework-agnostic user interface for access control rules.",
     "files": [
         "dist"
     ],
@@ -12,8 +12,12 @@
     },
     "homepage": "https://github.com/wnikk/laravel-access-ui",
     "keywords": [
-        "Access User Interface",
-        "Vue"
+        "access",
+        "permissions",
+        "roles",
+        "acl",
+        "rbac",
+        "vue"
     ],
     "repository": {
         "type": "git",
@@ -27,15 +31,9 @@
     "license": "MIT",
     "devDependencies": {
         "@vitejs/plugin-vue": "^4.0.0",
-        "lodash": "^4.17.19",
-        "postcss": "^8.4.16",
-        "vite": "^4.0.2",
-        "vite-plugin-resolve": "^2.3.0"
+        "vite": "^4.0.2"
     },
     "dependencies": {
-        "tiny-emitter": "^2.1.0",
-        "vue": "^3.2.5",
-        "vue-i18n": "^9.2.2",
-        "vue-multiselect": "^3.0.0-beta.1"
+        "vue": "^3.2.47"
     }
 }
