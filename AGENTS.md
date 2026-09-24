@@ -30,7 +30,7 @@ src/
     Panel, Rules, Owners, Permissions, Inherit, Picker, Conditions, Explain, Health, Xacml
   Support/
     Errors.php                     code of AccessRulesException to HTTP status and translation key
-    OwnerReader.php                rows of the core as the screens show them: relatives, permissions with their source, counts
+    OwnerReader.php                permissions(), sources() and heirs() of the core shaped for the screens: grouped by rule, the label of a rule, counts
     RuleTree.php                   the tree of rules for the parent picker
     Vocabulary.php                 what a condition may name, for the editor
 routes/access-ui.php               every route; nothing registers without prefix and middleware
@@ -53,8 +53,8 @@ tests/Feature                      one test per promise of the documentation, th
 
 ## Rules of this repository
 
-- **The panel holds no logic of access.** Writes go through `Access`, `Access::for()`, `RuleCatalog` and `Xacml`; a decision comes from `explain()`. Where the panel reads tables itself (`OwnerReader`) it shows what the rows say and labels it so. It never decides from that reading.
-- **Nothing names a class of `src/Internal` of the core.** When a screen needs what the core does not give publicly, ask for it in the core, as `Cond::compile()` was added, or read the tables.
+- **The panel holds no logic of access.** Writes go through `Access`, `Access::for()`, `RuleCatalog` and `Xacml`; a decision comes from `explain()`; what an owner holds comes from `permissions()`, `sources()` and `heirs()` of the core, and `OwnerReader` only shapes it for the screens. The panel reads no table of the core.
+- **Nothing names a class of `src/Protected` of the core.** When a screen needs what the core does not give publicly, ask for it in the core, as `Cond::compile()` and `permissions()` were added.
 - **The panel knows no model of the application.** Owners are addressed by the id of their row. The one exception is `ExplainController`, which loads the model an owner stands for, because conditions read `user.` from it.
 - **Routes stay off** until `routes.prefix` and `routes.middleware` are both set. Every screen has `enabled`, `write` and `ability`; `BaseController::callAction()` checks them, so a new action is guarded by being on the controller.
 - **Tests go through the routes** and assert JSON or the rows of the core. No test constructs a controller.

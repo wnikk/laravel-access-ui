@@ -2,7 +2,7 @@
 
 All notable changes to `laravel-access-ui` will be documented in this file
 
-## 3.0.0 - 2026-09-24
+## 3.0.1 - 2026-09-24
 
 Rewritten for `wnikk/laravel-access-rules` 3.2+, Laravel 13+ and PHP 8.4+. The configuration of 2.0 stays valid, the routes and the bundle changed: [upgrade guide](docs/upgrade-2-to-3.md).
 
@@ -18,6 +18,7 @@ Rewritten for `wnikk/laravel-access-rules` 3.2+, Laravel 13+ and PHP 8.4+. The c
 - Owners are paged and searched; tenants and the guest are marked; "who inherits from this" for every owner
 - Widget counts own, inherited, conditional and forbidden rows; its own policy `widget.write` and `widget.ability`, a Gate ability that receives the owner; `'write' => false` on the directive; the page gets only what the card uses
 - Translations may be registered before the bundle loads, on `window.accessUiMessages`
+- What an owner holds and inherits comes from `permissions()`, `sources()` and `heirs()` of the core 3.3; the panel reads no table of the core
 - Refusals of the core answer with their code, a translated meaning and the words of the core
 - Tests through the routes on SQLite, PostgreSQL and MySQL; CI compares `dist/` with a fresh build
 - Laravel Boost guideline and skill, `docs/llms.txt`, `AGENTS.md`

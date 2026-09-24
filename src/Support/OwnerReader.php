@@ -4,129 +4,56 @@ declare(strict_types=1);
 
 namespace Wnikk\LaravelAccessUi\Support;
 
-use Illuminate\Database\Eloquent\Builder;
-use Wnikk\LaravelAccessRules\Conditions\Cond;
-use Wnikk\LaravelAccessRules\Contracts\Inheritance as InheritanceContract;
+use Wnikk\LaravelAccessRules\Contracts\AccessManager;
 use Wnikk\LaravelAccessRules\Contracts\Owner as OwnerContract;
-use Wnikk\LaravelAccessRules\Contracts\Permission as PermissionContract;
-use Wnikk\LaravelAccessRules\Contracts\Rule as RuleContract;
-use Wnikk\LaravelAccessUi\AccessUi;
 
 /**
- * Reads the tables of the core for the screens: who inherits from whom, and what an owner holds
- * with the place each permission comes from.
+ * What the core says an owner holds, shaped for the screens.
  *
- * The core compiles the same facts for a check and keeps the compiled form to itself. This class
- * reads the rows instead, so what it reports is what the tables say and not what a check would
- * decide: a condition is shown as text, and whether it holds for a record is a question for
- * "explain". The five steps of priority are applied here for one purpose, the label of a rule
- * in the matrix; a decision is never taken from that label.
+ * The core answers permissions(), sources() and heirs() as data since 3.3; this class regroups
+ * the rows by rule and turns the five steps of priority into the label of a rule in the matrix.
+ * A decision is never taken from that label: whether a condition holds for a record is a
+ * question for "explain". Nothing here reads a table.
  */
 final class OwnerReader
 {
-    /** Levels of inheritance the walk follows. A cycle in data cannot hang a request. */
-    private const DEPTH = 100;
-
-    public function __construct(private readonly AccessUi $ui) {}
+    public function __construct(private readonly AccessManager $access) {}
 
     /**
-     * Everything reachable from an owner in one direction, with the direct neighbour it came
-     * through. Breadth first, so the recorded route is the shortest one.
+     * Everyone reachable from an owner in one direction, direct ones first.
      *
-     * @param  string          $direction "parents" walks up to what the owner inherits from, "children" down to its heirs.
-     * @return array<int, int> Reached owner id => the direct neighbour it came through.
+     * @param  string                                                                                              $direction "parents" is what the owner inherits from, "children" who inherits from it.
+     * @return list<array{type:string, id:string, name:?string, record:int, direct:bool, link:?int, through:?int}>
      */
-    public function relatives(int $ownerId, string $direction): array
+    public function related(OwnerContract $owner, string $direction): array
     {
-        $from = $direction === 'children' ? 'owner_parent_id' : 'owner_id';
-        $to   = $direction === 'children' ? 'owner_id' : 'owner_parent_id';
+        $rows = $direction === 'children' ? $this->access->for($owner)->heirs() : $this->access->for($owner)->sources();
 
-        $reached = [];
-        $border  = [];
+        usort($rows, static fn (array $a, array $b): int => ($b['direct'] <=> $a['direct']) ?: strcmp((string) ($a['name'] ?? $a['id']), (string) ($b['name'] ?? $b['id'])));
 
-        foreach ($this->links()->where($from, $ownerId)->pluck($to) as $id) {
-            $reached[(int) $id] = (int) $id;
-            $border[(int) $id]  = (int) $id;
-        }
-
-        for ($depth = self::DEPTH; $border !== [] && $depth > 0; $depth--) {
-            $next   = $this->links()->whereIn($from, array_keys($border))->get([$from, $to]);
-            $border = [];
-
-            foreach ($next as $row) {
-                $reachedId = (int) $row->{$to};
-
-                if ($reachedId === $ownerId || isset($reached[$reachedId])) {
-                    continue;
-                }
-
-                $reached[$reachedId] = $reached[(int) $row->{$from}];
-                $border[$reachedId]  = $reachedId;
-            }
-        }
-
-        return $reached;
+        return $rows;
     }
 
     /**
-     * Every permission row that reaches an owner: its own and those of everything it inherits
-     * from, grouped by rule id, strongest first inside a group.
+     * Every row that reaches an owner, grouped by rule id, strongest first inside a group, in the
+     * shape the matrix draws: the source as a title, and the id of its record to key a chip by.
      *
-     * @return array<int, list<array{effect:string, option:?string, when:?string, own:bool, from:?string, from_id:int}>>
+     * @return array<int, list<array{effect:string, option:?string, when:?string, own:bool, from:?string, from_id:int, via:?string, via_rule:?string}>>
      */
     public function permissionsOf(OwnerContract $owner): array
     {
-        $ownId   = (int) $owner->getKey();
-        $sources = [$ownId => $ownId] + $this->relatives($ownId, 'parents');
-        $titles  = [];
-
-        foreach ($this->ui->ownerQuery()->whereIn('id', array_keys($sources))->get() as $source) {
-            $titles[(int) $source->getKey()] = $this->ui->presentOwner($source)['title'];
-        }
-
-        $rows = app(PermissionContract::class)->newQuery()
-            ->with('rule')
-            ->whereIn('owner_id', array_keys($sources))
-            ->get();
-
         $byRule = [];
-        foreach ($rows as $row) {
-            if ($row->rule === null) {
-                continue;
-            }
-
-            $byRule[(int) $row->rule_id][] = [
-                'effect'  => $row->permission ? 'allow' : 'deny',
-                'option'  => $row->option,
-                'when'    => Cond::describe($row->condition, $row->rule->resource),
-                'own'     => (int) $row->owner_id === $ownId,
-                'from'    => (int) $row->owner_id === $ownId ? null : ($titles[(int) $row->owner_id] ?? null),
-                'from_id' => (int) $row->owner_id,
+        foreach ($this->access->for($owner)->permissions() as $row) {
+            $byRule[$row['rule_id']][] = [
+                'effect'   => $row['effect'],
+                'option'   => $row['option'],
+                'when'     => $row['when'],
+                'own'      => $row['own'],
+                'from'     => $row['own'] ? null : (($row['from']['name'] ?? '') !== '' ? $row['from']['name'] : $row['from']['id']),
+                'from_id'  => $row['from']['record'],
+                'via'      => $row['via'],
+                'via_rule' => $row['via_rule'],
             ];
-        }
-
-        // With the option on, a row on a rule also reaches every rule below it in the tree, at the
-        // same step. Such a row is shown under the rule it reaches, marked with the rule it sits on,
-        // and is removed there: the matrix would otherwise say "not set" for a rule a check permits.
-        if (config('access.rule_tree_inheritance')) {
-            $parents = app(RuleContract::class)->newQuery()->pluck('parent_id', 'id')->map(static fn ($id): int => (int) $id)->all();
-            $names   = app(RuleContract::class)->newQuery()->pluck('guard_name', 'id')->all();
-
-            foreach (array_keys($parents) as $ruleId) {
-                for ($above = $parents[$ruleId], $seen = [$ruleId => true]; $above > 0 && ! isset($seen[$above]); $above = $parents[$above] ?? 0) {
-                    $seen[$above] = true;
-
-                    foreach ($byRule[$above] ?? [] as $entry) {
-                        if (! isset($entry['via'])) {
-                            $byRule[$ruleId][] = ['via' => 'tree', 'via_rule' => $names[$above] ?? (string) $above] + $entry;
-                        }
-                    }
-                }
-            }
-        }
-
-        foreach ($byRule as &$entries) {
-            usort($entries, static fn (array $a, array $b): int => self::strength($b) <=> self::strength($a));
         }
 
         return $byRule;
@@ -171,7 +98,8 @@ final class OwnerReader
 
     /**
      * Counts for the widget: what the owner holds itself, what reaches it from others, and how
-     * much of that depends on a record.
+     * many rows carry a condition or take a permission away. A row that reaches a rule through
+     * the tree is counted once, on the rule it sits on.
      *
      * @return array{own:int, inherited:int, conditional:int, forbidden:int}
      */
@@ -179,37 +107,21 @@ final class OwnerReader
     {
         $counts = ['own' => 0, 'inherited' => 0, 'conditional' => 0, 'forbidden' => 0];
 
-        foreach ($this->permissionsOf($owner) as $entries) {
-            foreach ($entries as $entry) {
-                // A row that reaches a rule through the tree is counted once, on the rule it sits on.
-                if (isset($entry['via'])) {
-                    continue;
-                }
+        foreach ($this->access->for($owner)->permissions() as $row) {
+            if ($row['via'] !== null) {
+                continue;
+            }
 
-                $counts[$entry['own'] ? 'own' : 'inherited']++;
+            $counts[$row['own'] ? 'own' : 'inherited']++;
 
-                if ($entry['when'] !== null) {
-                    $counts['conditional']++;
-                }
-                if ($entry['effect'] === 'deny') {
-                    $counts['forbidden']++;
-                }
+            if ($row['when'] !== null) {
+                $counts['conditional']++;
+            }
+            if ($row['effect'] === 'deny') {
+                $counts['forbidden']++;
             }
         }
 
         return $counts;
-    }
-
-    /**
-     * The five steps of the core as a number: inherited permit < inherited prohibition < own permit < own prohibition.
-     */
-    private static function strength(array $entry): int
-    {
-        return ($entry['own'] ? 2 : 0) + ($entry['effect'] === 'deny' ? 1 : 0);
-    }
-
-    private function links(): Builder
-    {
-        return app(InheritanceContract::class)->newQuery();
     }
 }

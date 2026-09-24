@@ -9,7 +9,7 @@ description: Install and integrate wnikk/laravel-access-ui, the administration p
 
 Use it when the task is about the administration of access in an application that has `wnikk/laravel-access-rules` installed: installing the panel, protecting it, rendering it inside an existing admin layout, putting the assignment card on a user page, switching a screen off or making it read-only, translating it, calling its JSON routes from a page of the application, or upgrading from the 2.0 panel.
 
-Version 3 needs PHP 8.4, Laravel 13 and `wnikk/laravel-access-rules` 3.2.4 or newer.
+Version 3 needs PHP 8.4, Laravel 13 and `wnikk/laravel-access-rules` 3.3 or newer.
 
 ## Mental model
 

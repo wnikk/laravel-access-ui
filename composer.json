@@ -1,6 +1,6 @@
 {
     "name": "wnikk/laravel-access-ui",
-    "version": "3.0.0",
+    "version": "3.0.1",
     "description": "Administration screens for wnikk/laravel-access-rules 3.x: rules, owners, permissions with conditions, inheritance, explain, health and XACML. One script, one stylesheet, no CDN.",
     "license": "MIT",
     "keywords": [
@@ -36,7 +36,7 @@
         "illuminate/support": "^13.0",
         "illuminate/validation": "^13.0",
         "illuminate/view": "^13.0",
-        "wnikk/laravel-access-rules": "^3.2.4"
+        "wnikk/laravel-access-rules": "^3.3"
     },
     "require-dev": {
         "orchestra/testbench": "*",

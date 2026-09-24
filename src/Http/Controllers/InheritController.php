@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Wnikk\LaravelAccessRules\Contracts\AccessManager;
 use Wnikk\LaravelAccessRules\Contracts\Inheritance as InheritanceContract;
+use Wnikk\LaravelAccessRules\Contracts\Owner as OwnerContract;
 use Wnikk\LaravelAccessUi\AccessUi;
 use Wnikk\LaravelAccessUi\Support\OwnerReader;
 
@@ -41,41 +42,28 @@ class InheritController extends BaseController
         $direction = (string) $request->input('direction', 'parents');
         $ownerId   = (int) $record->getKey();
 
-        $links = $direction === 'children'
-            ? $record->inheritanceParent()->with('owner')->get()
-            : $record->inheritance()->with('ownerParent')->get();
+        // The core lists everyone reachable with the direct link each came through; the panel
+        // loads those rows of the owner table once to present them.
+        $related = $this->reader->related($record, $direction);
+        $owners  = $this->ui->ownerQuery()->whereIn('id', array_column($related, 'record') ?: [-1])->get()->keyBy(static fn (OwnerContract $o) => (int) $o->getKey());
 
         $list    = [];
         $directs = [];
 
-        foreach ($links as $link) {
-            $other = $direction === 'children' ? $link->owner : $link->ownerParent;
+        foreach ($related as $row) {
+            $other = $owners[$row['record']] ?? null;
             if ($other === null) {
                 continue;
             }
-
-            $directs[(int) $other->getKey()] = (int) $other->getKey();
-            $list[]                          = $this->ui->presentOwner($other, [
-                'inheritance_id' => (int) $link->getKey(),
-                'direct'         => true,
-                'through'        => null,
-                'linked_at'      => $link->created_at,
-            ]);
-        }
-
-        $reached  = $this->reader->relatives($ownerId, $direction);
-        $indirect = array_diff_key($reached, $directs);
-
-        if ($indirect !== []) {
-            foreach ($this->ui->ownerQuery()->whereIn('id', array_keys($indirect))->orderBy('name')->get() as $other) {
-                $through = $reached[(int) $other->getKey()];
-                $list[]  = $this->ui->presentOwner($other, [
-                    'inheritance_id' => null,
-                    'direct'         => false,
-                    'through'        => isset($directs[$through]) ? $through : null,
-                    'linked_at'      => null,
-                ]);
+            if ($row['direct']) {
+                $directs[$row['record']] = $row['record'];
             }
+
+            $list[] = $this->ui->presentOwner($other, [
+                'inheritance_id' => $row['link'],
+                'direct'         => $row['direct'],
+                'through'        => $row['through'],
+            ]);
         }
 
         $payload = [

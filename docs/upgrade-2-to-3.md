@@ -9,7 +9,7 @@ weight: 8
 
 ## Steps
 
-1. PHP 8.4, Laravel 13 and the core 3.2.4 or newer are required.
+1. PHP 8.4, Laravel 13 and the core 3.3 or newer are required.
 2. `composer require wnikk/laravel-access-ui:^3.0`.
 3. Publish the bundle again, the files changed:
    ```bash

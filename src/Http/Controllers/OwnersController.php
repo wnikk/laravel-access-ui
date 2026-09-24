@@ -112,7 +112,7 @@ class OwnersController extends BaseController
     {
         $record = $this->owner($owner);
         $params = $this->pageParams($request);
-        $ids    = array_keys($reader->relatives((int) $record->getKey(), 'children'));
+        $ids    = array_column($reader->related($record, 'children'), 'record');
 
         $query = $this->ui->ownerQuery()->whereIn('id', $ids ?: [-1]);
 

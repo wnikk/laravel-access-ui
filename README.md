@@ -53,7 +53,7 @@ Kept from 2.0: styles under `wacu-`, light and dark, a layout of yours or a bare
 
 - PHP 8.4 or newer
 - Laravel 13 or newer
-- `wnikk/laravel-access-rules` 3.2.4 or newer, installed and migrated
+- `wnikk/laravel-access-rules` 3.3 or newer, installed and migrated
 
 For an older application: `composer require wnikk/laravel-access-ui:^2.0`.
 

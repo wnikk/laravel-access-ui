@@ -5,7 +5,7 @@ weight: 1
 
 # Installation
 
-Version 3 of the panel needs PHP 8.4, Laravel 13 and `wnikk/laravel-access-rules` 3.2.4 or newer, installed and migrated. For an older application stay on 2.0: `composer require wnikk/laravel-access-ui:^2.0`.
+Version 3 of the panel needs PHP 8.4, Laravel 13 and `wnikk/laravel-access-rules` 3.3 or newer, installed and migrated. For an older application stay on 2.0: `composer require wnikk/laravel-access-ui:^2.0`.
 
 1. Install the package:
 
