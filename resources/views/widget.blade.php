@@ -24,6 +24,10 @@
 
         title      heading; defaults to the name of the assignable entity, or a generic one
         compact    true for a denser card
+        write      false for a card that only shows; config accessUi.widget is what the server enforces
+
+    The page gets what the card uses and nothing else: its four routes, the entities it may hand
+    out, the locale, the theme, the token. Nothing of the panel travels with it.
 
     Renders nothing at all when the routes are switched off or the inheritance screen is disabled, so a
     page carrying this line stays valid in an installation where the panel is not in use.
@@ -41,11 +45,7 @@
     @php
         // Unique per instance: a page may carry more than one card.
         $accessUiMount   = 'accessUiWidget'.$accessUiOwner.substr(md5($accessUiOwner.microtime(false)), 0, 6);
-        $accessUiPayload = array_merge($accessUiService->bootstrapPayload(), [
-            'owner'   => $accessUiOwner,
-            'title'   => $accessUiOptions['title'] ?? null,
-            'compact' => (bool) ($accessUiOptions['compact'] ?? false),
-        ]);
+        $accessUiPayload = $accessUiService->widgetPayload($accessUiService->findOwnerOrFail($accessUiOwner), $accessUiOptions);
     @endphp
 
     @include('accessUi::assets')

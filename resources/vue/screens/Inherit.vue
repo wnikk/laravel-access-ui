@@ -15,13 +15,13 @@
                     <h3 class="wacu-card-title">{{ t('inherit.sources') }}</h3>
                     <label class="wacu-search">
                         <Icon name="search" />
-                        <input v-model="search" type="search" class="wacu-input" :placeholder="t('app.filter')" />
+                        <input v-model="search" type="search" class="wacu-input" :placeholder="t('app.filter')" @input="searchLater" />
                     </label>
                 </div>
 
                 <div class="wacu-list">
                     <button
-                        v-for="row in visibleSources"
+                        v-for="row in sources"
                         :key="row.id"
                         type="button"
                         class="wacu-list-row"
@@ -40,7 +40,13 @@
                         </span>
                     </button>
 
-                    <p v-if="!visibleSources.length" class="wacu-empty">{{ t('app.nothingMatches') }}</p>
+                    <p v-if="!sources.length" class="wacu-empty">{{ t('app.nothingMatches') }}</p>
+                </div>
+
+                <div v-if="meta.last_page > 1" class="wacu-pager">
+                    <button type="button" class="wacu-btn" :disabled="meta.current_page <= 1" @click="loadSources(meta.current_page - 1)"><Icon name="left" /></button>
+                    <span class="wacu-muted">{{ meta.current_page }} / {{ meta.last_page }}</span>
+                    <button type="button" class="wacu-btn" :disabled="meta.current_page >= meta.last_page" @click="loadSources(meta.current_page + 1)"><Icon name="right" /></button>
                 </div>
             </div>
 
@@ -49,7 +55,7 @@
                 <div class="wacu-card-head">
                     <h3 class="wacu-card-title">
                         {{ t('inherit.inheritors') }}
-                        <span v-if="selected" class="wacu-muted">— {{ selected.title }}</span>
+                        <span v-if="selected" class="wacu-muted">· {{ selected.title }}</span>
                     </h3>
                     <button
                         v-if="selected && write"
@@ -142,10 +148,10 @@ import { t } from '../../js/libs/i18n.js';
  * Who inherits from whom.
  *
  * Parent-centric, two panes: choose a source on the left, manage its inheritors on the right. The
- * asymmetry between the panes is the whole design. What may be a *source* is a decision — the configured
- * entities, widened only by whoever already holds a permission, because a grant nobody can see is a
- * grant nobody can revoke. What may be an *inheritor* is not a decision: if an owner row exists,
- * something in the application put it there, so any of them may be given rights.
+ * asymmetry between the panes is the design. What may be a source is a decision: the configured
+ * entities, widened by whoever holds a permission, because a grant nobody can see is a grant nobody
+ * can revoke. What may be an inheritor is not a decision: if an owner row exists, something in the
+ * application put it there, so any of them may be given rights.
  *
  * The other direction of the same data lives in the widget, where somebody standing on one account's
  * page asks what it inherits from.
@@ -161,52 +167,45 @@ const config = inject('acuConfig');
 const sourcesCard = ref(null);
 const childrenCard = ref(null);
 const sources = ref([]);
+const meta = ref({ current_page: 1, last_page: 1, total: 0 });
 const search = ref('');
+
+let debounce = null;
 const selectedId = ref(props.ownerId ? Number(props.ownerId) : null);
 const pickerOpen = ref(false);
 
-const { list, write, via, load, add, remove, linked, reset } = useInheritance(
+const { owner, list, write, via, load, add, remove, linked, reset } = useInheritance(
     config,
     selectedId,
     'children',
     () => ({ lock: childrenCard.value, status: config.noticeHost })
 );
 
-const selected = computed(() => sources.value.find((row) => row.id === selectedId.value) || null);
-
-const visibleSources = computed(() => {
-    const term = search.value.trim().toLowerCase();
-
-    if (!term) return sources.value;
-
-    return sources.value.filter(
-        (row) =>
-            String(row.title || '').toLowerCase().includes(term) ||
-            String(row.original_id || '').toLowerCase().includes(term) ||
-            String(row.type_label || '').toLowerCase().includes(term)
-    );
-});
+/** The one picked on the left, or what the right pane loaded for a selection made elsewhere. */
+const selected = computed(() => sources.value.find((row) => row.id === selectedId.value) || owner.value || null);
 
 // The source itself plus everyone already inheriting from it: neither belongs in the add dialog.
 const excluded = computed(() =>
     selectedId.value ? [selectedId.value].concat(linked.value) : linked.value
 );
 
-async function loadSources() {
-    const endpoint = query(config.routes.owners, { entity: 'all' });
+/**
+ * Paged and searched on the server, like the owners screen. A selection carried in from elsewhere
+ * may sit on another page; the right pane loads it by id all the same.
+ */
+async function loadSources(page = 1) {
+    const endpoint = query(config.routes.owners, { entity: 'all', search: search.value.trim(), page });
     const data = await get(endpoint, { lock: sourcesCard.value, status: config.noticeHost });
 
     if (data === null) return;
 
-    sources.value = data.list || [];
+    sources.value = data.rows || [];
+    meta.value = data.meta || meta.value;
+}
 
-    // A selection carried in from elsewhere — a link, or the owners screen — may name something this
-    // list does not contain. Dropping it is better than showing an empty right-hand pane with a name
-    // in its heading.
-    if (selectedId.value && !sources.value.some((row) => row.id === selectedId.value)) {
-        selectedId.value = null;
-        reset();
-    }
+function searchLater() {
+    clearTimeout(debounce);
+    debounce = setTimeout(() => loadSources(1), 300);
 }
 
 function select(row) {
@@ -219,11 +218,11 @@ async function onPick(row) {
     pickerOpen.value = false;
 
     // Reload the left pane too: its inheritor counts just changed.
-    if (await add(row.id)) loadSources();
+    if (await add(row.id)) loadSources(meta.value.current_page);
 }
 
 async function removeRow(row) {
-    if (await remove(row)) loadSources();
+    if (await remove(row)) loadSources(meta.value.current_page);
 }
 
 watch(

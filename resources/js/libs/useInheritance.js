@@ -24,7 +24,7 @@ export function useInheritance(config, ownerId, direction, hosts) {
     const owner = ref(null);
     const list = ref([]);
     const available = ref({ list: [], truncated: false, total: 0, scope: 'assignable' });
-    const permissions = ref({ effective: 0, direct: 0, forbidden: 0 });
+    const permissions = ref({ own: 0, inherited: 0, conditional: 0, forbidden: 0 });
     const write = ref(false);
     const loaded = ref(false);
 
@@ -68,7 +68,7 @@ export function useInheritance(config, ownerId, direction, hosts) {
         owner.value = null;
         list.value = [];
         available.value = { list: [], truncated: false, total: 0, scope: 'assignable' };
-        permissions.value = { effective: 0, direct: 0, forbidden: 0 };
+        permissions.value = { own: 0, inherited: 0, conditional: 0, forbidden: 0 };
         loaded.value = false;
     }
 
@@ -89,7 +89,8 @@ export function useInheritance(config, ownerId, direction, hosts) {
         list.value = data.list || [];
         available.value = data.available || available.value;
         permissions.value = data.permissions || permissions.value;
-        write.value = !!data.write;
+        // The server says what may be changed; the page may still ask for a card that only shows.
+        write.value = !!data.write && !config.readOnly;
         loaded.value = true;
     }
 

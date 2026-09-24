@@ -1,77 +1,75 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Wnikk\LaravelAccessUi;
 
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Config\Repository;
+use Illuminate\Contracts\Auth\Access\Gate;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use LogicException;
 use Throwable;
-use Wnikk\LaravelAccessRules\Contracts\AccessRules as AccessRulesContract;
+use Wnikk\LaravelAccessRules\AccessRules;
 use Wnikk\LaravelAccessRules\Contracts\Owner as OwnerContract;
 
 /**
- * Configuration, turned into the questions the screens actually ask.
+ * Configuration, turned into the questions the screens ask.
  *
- * The one thing worth knowing about this class is what it does *not* do: it never loads, queries or
- * names a model belonging to the host application. access-rules keeps every owner — users, roles,
- * groups — as a row in one table, and that table is the whole of this panel's world. An entity in
- * config is a label and two decisions about it, nothing more.
+ * The class never loads, queries or names a model of the host application. The core keeps every
+ * owner, users, roles and groups alike, as a row of one table, and that table is the whole world
+ * of this panel. An entity in config is a label and two decisions about it, nothing more.
  *
- * Which is why owners are addressed by their owner id and by nothing else. A host page that wants the
- * assignment widget for a user already has a way to get that id: `$user->getOwner()->id`, from the
- * trait access-rules asks you to put on the model anyway. Asking for it there rather than resolving it
- * here keeps the panel independent of how the application stores anything, and keeps the integration
- * to one expression.
+ * Owners are therefore addressed by the id of their row and by nothing else. A host page that
+ * wants the assignment widget for a user has that id already: $user->getOwner()->id, from the
+ * trait the core asks to put on the model. Resolving it here instead would tie the panel to how
+ * the application stores people.
+ *
+ * Nothing about access is decided here. The core answers can(), explain() and every write; this
+ * class knows which screens are on, which owner types the panel lists, and where the bundle is.
  */
 class AccessUi
 {
-    /** Normalised entity definitions, keyed by entity key. Built once per request. */
-    protected $entities;
+    /** @var array<string, array{key:string, type:string, type_id:int, label:string, single:string, create:bool, assignable:bool}>|null */
+    private ?array $entities = null;
 
-    /** Entity keys that are configured but unusable, with the reason. @var array<string, string> */
-    protected $problems = [];
+    /** @var array<string, string> Entity keys that are configured but unusable, with the reason. */
+    private array $problems = [];
 
-    /** Whether the bundle tags have already gone out on this page. @var bool */
-    protected $assetsEmitted = false;
+    private bool $assetsEmitted = false;
 
-    // =================================================================
-    // Configuration
-    // =================================================================
+    public const SCREENS = ['rules', 'owners', 'permissions', 'inherit', 'explain', 'health', 'xacml'];
 
-    /**
-     * Read a value out of config/accessUi.php.
-     *
-     * @param string $key
-     * @param mixed $default
-     * @return mixed
-     */
-    public function config(string $key, $default = null)
+    public function __construct(
+        private readonly Repository $config,
+        private readonly Gate $gate,
+    ) {}
+
+    public function config(string $key, mixed $default = null): mixed
     {
-        return config('accessUi.'.$key, $default);
+        return $this->config->get('accessUi.'.$key, $default);
     }
 
+    // =================================================================
+    // Routes
+    // =================================================================
+
     /**
-     * Whether the route group should be registered at all.
-     *
-     * Both a prefix and a middleware stack are required. The middleware is the part that matters:
-     * these endpoints hand out permissions, so registering them without a guard would be worse than
-     * not registering them. Requiring the prefix too means an install that was never configured
-     * exposes nothing, rather than exposing something at a path nobody chose.
-     *
-     * @return bool
+     * Both a prefix and a middleware stack are required before anything is registered. These
+     * endpoints hand out permissions, so registering them without a guard would be worse than
+     * not registering them; requiring the prefix too keeps an install that was never configured
+     * from exposing something at a path nobody chose.
      */
     public function routesEnabled(): bool
     {
         return $this->routePrefix() !== null && $this->routeMiddleware() !== [];
     }
 
-    /**
-     * @return string|null
-     */
-    public function routePrefix()
+    public function routePrefix(): ?string
     {
         $prefix = $this->config('routes.prefix');
 
-        if (!is_string($prefix)) {
+        if (! is_string($prefix)) {
             return null;
         }
 
@@ -81,7 +79,7 @@ class AccessUi
     }
 
     /**
-     * @return array<int, string>
+     * @return list<string>
      */
     public function routeMiddleware(): array
     {
@@ -96,65 +94,46 @@ class AccessUi
 
     /**
      * Route-name prefix, always ending in a dot.
-     *
-     * @return string
      */
     public function routeName(): string
     {
         $name = (string) $this->config('routes.as', 'accessUi.');
         $name = $name === '' ? 'accessUi.' : $name;
 
-        return substr($name, -1) === '.' ? $name : $name.'.';
+        return str_ends_with($name, '.') ? $name : $name.'.';
     }
 
     // =================================================================
     // Screens
     // =================================================================
 
-    /**
-     * @param string $screen
-     * @return bool
-     */
     public function screenEnabled(string $screen): bool
     {
-        return (bool) $this->config('screens.'.$screen.'.enabled', false);
+        return in_array($screen, self::SCREENS, true) && (bool) $this->config('screens.'.$screen.'.enabled', true);
     }
 
     /**
-     * May the current request change anything on this screen?
-     *
-     * Two gates, both of which have to open: the `write` switch in config, and the Gate ability named
-     * next to it when there is one. A screen may therefore be readable and not writable, which is the
-     * useful setting for rules.
-     *
-     * @param string $screen
-     * @return bool
+     * May the current request change anything on this screen? Two gates, both have to open: the
+     * "write" switch in config, and the Gate ability named next to it when there is one. A screen
+     * may be readable and not writable, which is the useful setting for rules.
      */
     public function screenWritable(string $screen): bool
     {
-        if (!$this->screenEnabled($screen) || !$this->config('screens.'.$screen.'.write', false)) {
+        if (! $this->screenEnabled($screen) || ! $this->config('screens.'.$screen.'.write', true)) {
             return false;
         }
 
         $ability = $this->config('screens.'.$screen.'.ability');
 
-        return $ability === null || Gate::allows($ability);
+        return $ability === null || $this->gate->allows($ability);
     }
 
-    /**
-     * @param string $screen
-     * @return void
-     */
-    public function authorizeRead(string $screen)
+    public function authorizeRead(string $screen): void
     {
         abort_unless($this->screenEnabled($screen), 403, 'This screen is disabled in config/accessUi.php.');
     }
 
-    /**
-     * @param string $screen
-     * @return void
-     */
-    public function authorizeWrite(string $screen)
+    public function authorizeWrite(string $screen): void
     {
         $this->authorizeRead($screen);
 
@@ -166,16 +145,12 @@ class AccessUi
     // =================================================================
 
     /**
-     * The class name the application calls a user.
-     *
-     * Read as a string and used as a string: access-rules derives an owner type from the label, and a
-     * label is all this is. The class is never loaded.
-     *
-     * @return string|null
+     * The class the application calls a user, read as a string and used as a string. The core
+     * derives an owner type from the label; the class is never loaded.
      */
-    public function userType()
+    public function userType(): ?string
     {
-        $model = config('auth.providers.users.model');
+        $model = $this->config->get('auth.providers.users.model');
 
         return is_string($model) && $model !== '' ? $model : null;
     }
@@ -183,11 +158,10 @@ class AccessUi
     /**
      * Every usable entity, keyed by entity key, in configuration order.
      *
-     * An entity whose type is not listed in config/access.php is dropped rather than thrown, and the
-     * reason is kept in {@see problems()} for the panel to report. A single mistyped label should cost
-     * that one entity, not the whole screen.
+     * An entity whose type is not listed in config/access.php is dropped and the reason is kept
+     * for the panel to report. A single mistyped label costs that entity, not the whole screen.
      *
-     * @return array<string, array>
+     * @return array<string, array{key:string, type:string, type_id:int, label:string, single:string, create:bool, assignable:bool}>
      */
     public function entities(): array
     {
@@ -199,7 +173,7 @@ class AccessUi
         $configured     = $this->config('entities', []);
 
         foreach ((is_array($configured) ? $configured : []) as $key => $definition) {
-            if (!is_string($key) || !is_array($definition)) {
+            if (! is_string($key) || ! is_array($definition)) {
                 continue;
             }
 
@@ -214,8 +188,6 @@ class AccessUi
     }
 
     /**
-     * Entity keys that were configured but could not be used, with the reason why.
-     *
      * @return array<string, string>
      */
     public function problems(): array
@@ -226,31 +198,18 @@ class AccessUi
     }
 
     /**
-     * @param string $key
-     * @param array $definition
-     * @return array
+     * @return array{key:string, type:string, type_id:int, label:string, single:string, create:bool, assignable:bool}
      */
-    protected function normalise(string $key, array $definition): array
+    private function normalise(string $key, array $definition): array
     {
-        $type = $definition['type'] ?? null;
-
-        if ($type === null) {
-            $type = $this->userType();
-
-            if ($type === null) {
-                throw new LogicException(
-                    'Entity "'.$key.'" has no type and auth.providers.users.model is not set.'
-                );
-            }
-        }
-
-        // Throws when the label is absent from config/access.php → owner_types.
-        $typeId = app(OwnerContract::class)->getTypeID($type);
+        $type = $definition['type'] ?? $this->userType()
+            ?? throw new LogicException('Entity "'.$key.'" has no type and auth.providers.users.model is not set.');
 
         return [
-            'key'        => $key,
-            'type'       => (string) $type,
-            'type_id'    => (int) $typeId,
+            'key'  => $key,
+            'type' => (string) $type,
+            // Throws when the label is absent from config/access.php, owner_types.
+            'type_id'    => AccessRules::getTypeID((string) $type),
             'label'      => (string) ($definition['label'] ?? $key),
             'single'     => (string) ($definition['single'] ?? ($definition['label'] ?? $key)),
             'create'     => (bool) ($definition['create'] ?? false),
@@ -259,19 +218,7 @@ class AccessUi
     }
 
     /**
-     * @param string $key
-     * @return bool
-     */
-    public function hasEntity(string $key): bool
-    {
-        return isset($this->entities()[$key]);
-    }
-
-    /**
      * One entity, or a 404 when the key is not one the panel knows.
-     *
-     * @param string $key
-     * @return array
      */
     public function entity(string $key): array
     {
@@ -283,42 +230,31 @@ class AccessUi
     }
 
     /**
-     * Entities carrying a given flag: 'create' or 'assignable'.
+     * Entities carrying a flag: "create" or "assignable".
      *
-     * @param string $flag
      * @return array<string, array>
      */
     public function entitiesWith(string $flag): array
     {
-        return array_filter($this->entities(), static function ($entity) use ($flag) {
-            return !empty($entity[$flag]);
-        });
+        return array_filter($this->entities(), static fn (array $entity): bool => ! empty($entity[$flag]));
     }
 
     /**
-     * Numeric types of every configured entity.
-     *
-     * @return array<int, int>
+     * @return list<int>
      */
     public function configuredTypeIds(): array
     {
         return array_values(array_column($this->entities(), 'type_id'));
     }
 
-    /**
-     * The entity behind a numeric owner type, if there is one in config.
-     *
-     * @param int|null $typeId
-     * @return array|null
-     */
-    public function entityForType($typeId)
+    public function entityForType(?int $typeId): ?array
     {
         if ($typeId === null) {
             return null;
         }
 
         foreach ($this->entities() as $entity) {
-            if ($entity['type_id'] === (int) $typeId) {
+            if ($entity['type_id'] === $typeId) {
                 return $entity;
             }
         }
@@ -329,28 +265,50 @@ class AccessUi
     /**
      * A readable name for any owner type, configured or not.
      *
-     * Owners of unconfigured types still show up whenever they hold a permission, so they need a label
-     * too. `Type#12345` is the honest answer when access-rules has no label for it either — it means
-     * the type was removed from config/access.php while rows still point at it.
-     *
-     * @param int|null $typeId
-     * @return string
+     * Owners of unconfigured types show up whenever they hold a permission, so they need a label
+     * too. "Type#12345" is the honest answer when the core has no label either: the type left
+     * config/access.php while rows still point at it.
      */
-    public function typeLabel($typeId): string
+    public function typeLabel(?int $typeId): string
     {
-        $entity = $this->entityForType($typeId);
-
-        if ($entity) {
-            return $entity['single'];
+        if ($entity = $this->entityForType($typeId)) {
+            return __($entity['single']);
         }
 
         if ($typeId === null) {
             return 'Unknown';
         }
 
-        $known = app(OwnerContract::class)->getListTypes();
+        $known = AccessRules::getListTypes();
 
-        return isset($known[(int) $typeId]) ? class_basename($known[(int) $typeId]) : 'Type#'.$typeId;
+        return isset($known[$typeId]) ? class_basename($known[$typeId]) : 'Type#'.$typeId;
+    }
+
+    /**
+     * Owner types that the core treats specially, so a list can say so next to the name.
+     *
+     * @return array{tenant:list<int>, guest:?array{type:int, id:string}}
+     */
+    public function specialTypes(): array
+    {
+        $tenants = [];
+        foreach ((array) $this->config->get('access.tenant_types', []) as $type) {
+            try {
+                $tenants[] = AccessRules::getTypeID((string) $type);
+            } catch (Throwable) {
+            }
+        }
+
+        $guest = $this->config->get('access.guest');
+        try {
+            $guest = is_array($guest) && isset($guest['type'], $guest['id'])
+                ? ['type' => AccessRules::getTypeID((string) $guest['type']), 'id' => (string) $guest['id']]
+                : null;
+        } catch (Throwable) {
+            $guest = null;
+        }
+
+        return ['tenant' => $tenants, 'guest' => $guest];
     }
 
     // =================================================================
@@ -358,192 +316,108 @@ class AccessUi
     // =================================================================
 
     /**
-     * An owner by its own id, and by nothing else.
-     *
-     * @param int|string $id
-     * @return OwnerContract|\Illuminate\Database\Eloquent\Model|null
+     * An owner by the id of its row, and by nothing else.
      */
-    public function findOwner($id)
+    public function findOwner(int|string $id): ?OwnerContract
     {
         $id = (int) $id;
 
-        return $id > 0 ? app(OwnerContract::class)->newQuery()->find($id) : null;
+        return $id > 0 ? $this->ownerQuery()->find($id) : null;
     }
 
-    /**
-     * @param int|string $id
-     * @return OwnerContract|\Illuminate\Database\Eloquent\Model
-     */
-    public function findOwnerOrFail($id)
+    public function findOwnerOrFail(int|string $id): OwnerContract
     {
-        $owner = $this->findOwner($id);
-
-        abort_if($owner === null, 404, 'No owner with id "'.$id.'".');
-
-        return $owner;
+        return $this->findOwner($id) ?? abort(404, 'No owner with id "'.$id.'".');
     }
 
-    /**
-     * One owner as the interface wants it.
-     *
-     * @param OwnerContract|\Illuminate\Database\Eloquent\Model $owner
-     * @param array $extra
-     * @return array
-     */
-    public function presentOwner($owner, array $extra = []): array
-    {
-        $entity = $this->entityForType($owner->type);
-        $name   = $owner->name;
-
-        return $extra + [
-            'id'          => (int) $owner->getKey(),
-            'entity'      => $entity ? $entity['key'] : null,
-            'type_label'  => $this->typeLabel($owner->type),
-            'original_id' => $owner->original_id,
-            'name'        => $name,
-            'title'       => ($name !== null && $name !== '') ? $name : (string) $owner->original_id,
-
-            // False means "not in config, listed because it holds something". The screens mark those
-            // rather than hiding them: an unlisted owner with permissions is exactly what an
-            // administrator needs to see.
-            'managed'     => $entity !== null,
-            'created_at'  => $owner->created_at,
-        ];
-    }
-
-    // =================================================================
-    // Owner queries
-    // =================================================================
-
-    /**
-     * Owners the screens list: the configured types, plus anything holding a permission or a
-     * prohibition whatever its type.
-     *
-     * The second half is not a nicety. A permission granted straight to one account is invisible on a
-     * screen that lists only roles, and an administrator who cannot see it cannot revoke it.
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function listedOwnerQuery()
-    {
-        $typeIds = $this->configuredTypeIds();
-        $query   = app(OwnerContract::class)->newQuery();
-
-        // No entities configured at all is a usable setup, not a broken one: the panel then shows
-        // exactly the owners that hold something, which is the whole truth about a system whose
-        // permissions all went straight to accounts.
-        if ($typeIds === []) {
-            return $query->has('permission');
-        }
-
-        return $query->where(static function ($inner) use ($typeIds) {
-            $inner->whereIn('type', $typeIds)->orHas('permission');
-        });
-    }
-
-    /**
-     * Owners that may be handed out as a source of rights — the widget's dropdown.
-     *
-     * Configured `assignable` types only. Unlike the listed set this does not widen to whoever happens
-     * to hold a permission: what may be assigned is a decision, and holding a permission is not one.
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function assignableOwnerQuery()
-    {
-        $typeIds = array_values(array_column($this->entitiesWith('assignable'), 'type_id'));
-
-        return app(OwnerContract::class)->newQuery()->whereIn('type', $typeIds ?: [-1]);
-    }
-
-    /**
-     * Every owner row.
-     *
-     * Used when choosing who should inherit from something. Who may *receive* rights is not a decision
-     * the entity list makes — if a row exists, something in the application put it there, and it is a
-     * legitimate target.
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function allOwnerQuery()
+    public function ownerQuery(): Builder
     {
         return app(OwnerContract::class)->newQuery();
     }
 
     /**
-     * Search one of the owner sets, paged.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $search
-     * @param int $page
-     * @param int $perPage
-     * @return array{rows: array, meta: array}
+     * Owners the screens list: the configured types, plus anything holding a permission or a
+     * prohibition whatever its type. A permission granted straight to one account is invisible
+     * on a screen that lists only roles, and an administrator who cannot see it cannot revoke it.
      */
-    public function searchOwners($query, string $search, int $page, int $perPage): array
+    public function listedOwnerQuery(): Builder
     {
-        if ($search !== '') {
-            $query->where(static function ($inner) use ($search) {
-                $inner->where('name', 'like', '%'.$search.'%')
-                    ->orWhere('original_id', 'like', '%'.$search.'%');
-            });
+        $typeIds = $this->configuredTypeIds();
+        $query   = $this->ownerQuery();
+
+        // No entities configured is a usable setup: the panel then shows exactly the owners that
+        // hold something, which is the whole truth about a system whose permissions went to accounts.
+        if ($typeIds === []) {
+            return $query->has('permission');
         }
 
-        $paginator = $query->orderBy('name')->paginate($perPage, ['*'], 'page', $page);
-
-        $rows = [];
-        foreach ($paginator->items() as $owner) {
-            $rows[] = $this->presentOwner($owner);
-        }
-
-        return ['rows' => $rows, 'meta' => $this->paginationMeta($paginator)];
+        return $query->where(static function (Builder $inner) use ($typeIds): void {
+            $inner->whereIn('type', $typeIds)->orHas('permission');
+        });
     }
 
     /**
-     * Paginator reduced to what a table needs: the rows and where they sit.
-     *
-     * @param \Illuminate\Contracts\Pagination\LengthAwarePaginator $paginator
-     * @return array
+     * Owners that may be handed out as a source of rights: the configured "assignable" types only.
+     * Holding a permission does not widen this set; what may be assigned is a decision.
      */
-    public function paginationMeta($paginator): array
+    public function assignableOwnerQuery(): Builder
     {
-        return [
-            'current_page' => $paginator->currentPage(),
-            'last_page'    => $paginator->lastPage(),
-            'per_page'     => $paginator->perPage(),
-            'total'        => $paginator->total(),
+        $typeIds = array_values(array_column($this->entitiesWith('assignable'), 'type_id'));
+
+        return $this->ownerQuery()->whereIn('type', $typeIds ?: [-1]);
+    }
+
+    /**
+     * One owner as the interface wants it.
+     *
+     * @param OwnerContract&Model $owner
+     */
+    public function presentOwner(OwnerContract $owner, array $extra = []): array
+    {
+        $entity  = $this->entityForType((int) $owner->type);
+        $special = $this->specialTypes();
+        $name    = $owner->name;
+
+        return $extra + [
+            'id'          => (int) $owner->getKey(),
+            'entity'      => $entity['key'] ?? null,
+            'type_label'  => $this->typeLabel((int) $owner->type),
+            'original_id' => $owner->original_id,
+            'name'        => $name,
+            'title'       => ($name !== null && $name !== '') ? $name : (string) $owner->original_id,
+            // False means "not in config, listed because it holds something". The screens mark those
+            // instead of hiding them: an unlisted owner with permissions is what an administrator looks for.
+            'managed'    => $entity !== null,
+            'tenant'     => in_array((int) $owner->type, $special['tenant'], true),
+            'guest'      => $special['guest'] !== null && $special['guest']['type'] === (int) $owner->type && $special['guest']['id'] === (string) $owner->original_id,
+            'created_at' => $owner->created_at,
         ];
     }
 
-    // =================================================================
-    // Permission counts
-    // =================================================================
-
     /**
-     * How much this owner ends up with, without listing any of it.
-     *
-     * The widget on a user's page shows these numbers and no rule names. Three separate facts, and the
-     * gap between them is the useful part:
-     *
-     *   effective — what the owner can do once inheritance is resolved. The headline number.
-     *   direct    — granted to this owner itself. Non-zero here with nothing assigned is the signature
-     *               of an account someone hand-tuned, and the reason the widget shows a count at all:
-     *               "no roles" and "no rights" are not the same statement.
-     *   forbidden — prohibitions in force, which beat allowances including inherited ones.
-     *
-     * @param OwnerContract|\Illuminate\Database\Eloquent\Model $owner
-     * @return array{effective: int, direct: int, forbidden: int}
+     * @return array{rows:list<array>, meta:array{current_page:int, last_page:int, per_page:int, total:int}}
      */
-    public function permissionSummary($owner): array
+    public function searchOwners(Builder $query, string $search, int $page, int $perPage): array
     {
-        $accessRules = app(AccessRulesContract::class);
-        $accessRules->setOwner($owner);
+        if ($search !== '') {
+            // PostgreSQL compares LIKE by case; MySQL and SQLite do not. Lowering both sides gives one answer everywhere.
+            $needle = '%'.mb_strtolower($search).'%';
+            $query->where(static function (Builder $inner) use ($needle): void {
+                $inner->whereRaw('lower(name) like ?', [$needle])->orWhereRaw('lower(original_id) like ?', [$needle]);
+            });
+        }
 
-        $map = $accessRules->getThisPermitMap();
+        $paginator = $query->orderBy('name')->orderBy('id')->paginate($perPage, ['*'], 'page', $page);
 
         return [
-            'effective' => count($map['allow']),
-            'direct'    => (int) $owner->permission()->count(),
-            'forbidden' => count($map['disallow']),
+            // Counts a caller asked for with withCount() travel with the row.
+            'rows' => array_map(fn (OwnerContract $owner): array => $this->presentOwner($owner, array_map('intval', array_filter($owner->getAttributes(), static fn (string $key): bool => str_ends_with($key, '_count'), ARRAY_FILTER_USE_KEY))), $paginator->items()),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
+                'total'        => $paginator->total(),
+            ],
         ];
     }
 
@@ -552,13 +426,11 @@ class AccessUi
     // =================================================================
 
     /**
-     * URLs of the published bundle, or nulls when the host wires the assets up itself.
-     *
-     * @return array{css: string|null, js: string|null}
+     * @return array{css:?string, js:?string}
      */
     public function assetUrls(): array
     {
-        if (!$this->config('assets.inject', true)) {
+        if (! $this->config('assets.inject', true)) {
             return ['css' => null, 'js' => null];
         }
 
@@ -566,21 +438,13 @@ class AccessUi
         $version = $this->config('assets.version');
         $suffix  = ($version === null || $version === '') ? '' : '?v='.rawurlencode((string) $version);
 
-        return [
-            'css' => $base.'/accessUi.css'.$suffix,
-            'js'  => $base.'/accessUi.js'.$suffix,
-        ];
+        return ['css' => $base.'/accessUi.css'.$suffix, 'js' => $base.'/accessUi.js'.$suffix];
     }
 
     /**
-     * True the first time it is asked, false afterwards.
-     *
-     * The bundle tags may be reached from two directions on the same page — a layout that calls
-     * `@accessUiAssets`, and a widget that includes them itself so it works on a page that does not.
-     * Loading the bundle twice would mount two copies of everything, so whichever gets there first
-     * wins and the other stays quiet.
-     *
-     * @return bool
+     * True the first time it is asked, false afterwards. The bundle tags may be reached from two
+     * directions on one page, a layout that calls @accessUiAssets and a widget that includes them
+     * itself; loading the bundle twice would mount two copies of everything.
      */
     public function markAssetsEmitted(): bool
     {
@@ -592,53 +456,53 @@ class AccessUi
     }
 
     /**
-     * Every endpoint as a URL template.
-     *
-     * The `__OWNER__`, `__ID__`, `__RULE__` and `__LINK__` placeholders are filled in client-side.
-     * Going through `route()` rather than joining a prefix means the host can move or rename the group
-     * and nothing outside this method has to hear about it.
+     * Every endpoint as a URL template. The __OWNER__, __ID__ and __LINK__ placeholders are filled
+     * client-side. Going through route() means the host can move or rename the group and nothing
+     * outside this method hears about it.
      *
      * @return array<string, string>
      */
     public function routeUrls(): array
     {
-        if (!$this->routesEnabled()) {
+        if (! $this->routesEnabled()) {
             return [];
         }
 
-        $name = $this->routeName();
+        $n = $this->routeName();
 
         return [
-            'rules'         => route($name.'rules.index'),
-            'ruleCreate'    => route($name.'rules.store'),
-            'ruleUpdate'    => route($name.'rules.update', ['id' => '__ID__']),
-            'ruleDelete'    => route($name.'rules.destroy', ['id' => '__ID__']),
-            'ruleRestore'   => route($name.'rules.restore', ['id' => '__ID__']),
-            'owners'        => route($name.'owners.index'),
-            'ownerCreate'   => route($name.'owners.store'),
-            'ownerUpdate'   => route($name.'owners.update', ['owner' => '__OWNER__']),
-            'ownerDelete'   => route($name.'owners.destroy', ['owner' => '__OWNER__']),
-            'permissions'   => route($name.'permissions.index', ['owner' => '__OWNER__']),
-            'permissionSet' => route($name.'permissions.update', [
-                'owner' => '__OWNER__',
-                'rule'  => '__RULE__',
-            ]),
-            'inherit'       => route($name.'inherit.index', ['owner' => '__OWNER__']),
-            'inheritAdd'    => route($name.'inherit.store', ['owner' => '__OWNER__']),
-            'inheritRemove' => route($name.'inherit.destroy', [
-                'owner' => '__OWNER__',
-                'link'  => '__LINK__',
-            ]),
-            'pick'          => route($name.'pick'),
+            'rules'          => route($n.'rules.index'),
+            'ruleCreate'     => route($n.'rules.store'),
+            'ruleUpdate'     => route($n.'rules.update', ['id' => '__ID__']),
+            'ruleDelete'     => route($n.'rules.destroy', ['id' => '__ID__']),
+            'ruleHolders'    => route($n.'rules.holders', ['id' => '__ID__']),
+            'owners'         => route($n.'owners.index'),
+            'ownerCreate'    => route($n.'owners.store'),
+            'ownerUpdate'    => route($n.'owners.update', ['owner' => '__OWNER__']),
+            'ownerDelete'    => route($n.'owners.destroy', ['owner' => '__OWNER__']),
+            'ownerHeirs'     => route($n.'owners.heirs', ['owner' => '__OWNER__']),
+            'permissions'    => route($n.'permissions.index', ['owner' => '__OWNER__']),
+            'permissionSet'  => route($n.'permissions.store', ['owner' => '__OWNER__']),
+            'permissionDrop' => route($n.'permissions.destroy', ['owner' => '__OWNER__']),
+            'inherit'        => route($n.'inherit.index', ['owner' => '__OWNER__']),
+            'inheritAdd'     => route($n.'inherit.store', ['owner' => '__OWNER__']),
+            'inheritRemove'  => route($n.'inherit.destroy', ['owner' => '__OWNER__', 'link' => '__LINK__']),
+            'pick'           => route($n.'pick'),
+            'vocabulary'     => route($n.'conditions.vocabulary'),
+            'conditionCheck' => route($n.'conditions.check'),
+            'explain'        => route($n.'explain'),
+            'health'         => route($n.'health.index'),
+            'healthFix'      => route($n.'health.fix'),
+            'cacheFlush'     => route($n.'cache.flush'),
+            'xacmlExport'    => route($n.'xacml.export'),
+            'xacmlCheck'     => route($n.'xacml.check'),
+            'xacmlImport'    => route($n.'xacml.import'),
         ];
     }
 
     /**
      * Everything the interface needs to start: where to talk, what it may show, what it may change.
-     *
      * Shared by the panel page and by the assignment widget.
-     *
-     * @return array
      */
     public function bootstrapPayload(): array
     {
@@ -654,11 +518,8 @@ class AccessUi
         }
 
         $screens = [];
-        foreach (['rules', 'owners', 'permissions', 'inherit'] as $screen) {
-            $screens[$screen] = [
-                'enabled' => $this->screenEnabled($screen),
-                'write'   => $this->screenWritable($screen),
-            ];
+        foreach (self::SCREENS as $screen) {
+            $screens[$screen] = ['enabled' => $this->screenEnabled($screen), 'write' => $this->screenWritable($screen)];
         }
 
         $theme = $this->config('theme', 'auto');
@@ -673,33 +534,30 @@ class AccessUi
                 'perPage'     => (int) $this->config('picker.per_page', 15),
                 'inlineLimit' => (int) $this->config('picker.inline_limit', 100),
             ],
-            // Configured entities that could not be used. Reported on screen rather than swallowed:
-            // a role nobody can see is indistinguishable from a role nobody created.
-            'problems'  => $this->problems(),
-            'routes'    => $this->routeUrls(),
+            // With the option on, a row on "reports" also covers "reports.sales" inside the core. The matrix
+            // reads rows and cannot show that per rule, so the screen says it once.
+            'ruleTree' => (bool) $this->config->get('access.rule_tree_inheritance', false),
+            // Configured entities that could not be used, reported on screen: a role nobody can see
+            // is indistinguishable from a role nobody created.
+            'problems' => $this->problems(),
+            'routes'   => $this->routeUrls(),
         ];
     }
 
     /**
-     * Which owner a widget is about.
+     * Which owner a widget is about. Three ways to say it:
      *
-     * Three ways to say it, and the first is the one to use:
-     *
+     *     @accessUiWidget(['owner' => $user])        anything with getOwner(), the trait of the core
      *     @accessUiWidget(['owner' => $user->getOwner()->id])
-     *     @accessUiWidget(['owner' => $user])        // anything with getOwner(), i.e. the access-rules trait
      *     @accessUiWidget(['owner_id' => 17])
      *
-     * The second is duck-typed on purpose. `getOwner()` comes from the trait access-rules asks you to
-     * put on the model, so accepting any object that has it costs this package no knowledge of your
-     * classes — and it creates the owner row on demand, which is right: a user has none until
-     * something is granted to them, and mounting the widget is the moment somebody is about to.
-     *
-     * @param array $options
-     * @return int|null
+     * The first is duck-typed on purpose: it costs this package no knowledge of the classes of the
+     * application. getOwner() creates the row of the owner when it is absent, which is right here:
+     * a user has none until something is granted, and mounting the card is the moment somebody is about to.
      */
-    public function widgetOwnerId(array $options)
+    public function widgetOwnerId(array $options): ?int
     {
-        $given = $options['owner'] ?? ($options['owner_id'] ?? null);
+        $given = $options['owner'] ?? $options['owner_id'] ?? null;
 
         if (is_object($given)) {
             if ($given instanceof OwnerContract) {
@@ -707,49 +565,77 @@ class AccessUi
             }
 
             if (method_exists($given, 'getOwner')) {
-                $owner = $given->getOwner();
-
-                return $owner ? (int) $owner->getKey() : null;
+                return (int) ($given->getOwner()?->getKey() ?? 0) ?: null;
             }
 
             return null;
         }
 
-        if (is_numeric($given) && (int) $given > 0) {
-            return (int) $given;
-        }
-
-        return null;
+        return is_numeric($given) && (int) $given > 0 ? (int) $given : null;
     }
 
     /**
-     * Can the assignment widget be put on a page right now?
-     *
-     * It needs the routes to exist and the inheritance screen to be on. When either is missing the
-     * widget renders nothing at all, rather than a card whose buttons answer 403.
-     *
-     * @return bool
+     * The widget needs the routes and the inheritance screen. When either is missing it renders
+     * nothing at all, and not a card whose buttons answer 403.
      */
     public function widgetAvailable(): bool
     {
         return $this->routesEnabled() && $this->screenEnabled('inherit');
     }
 
-    // =================================================================
-    // Misc
-    // =================================================================
+    /**
+     * May the current request change what this owner inherits from, through the card? The
+     * inheritance screen has to be writable, then the card's own switch, then its ability, which
+     * receives the owner: the answer may depend on who asks and about whom. The server checks
+     * this on the routes the card uses, so a page that shows a read-only card is not the guard.
+     */
+    public function widgetWritable(OwnerContract $owner): bool
+    {
+        if (! $this->screenWritable('inherit') || ! $this->config('widget.write', true)) {
+            return false;
+        }
+
+        $ability = $this->config('widget.ability');
+
+        return $ability === null || $this->gate->allows($ability, [$owner]);
+    }
 
     /**
-     * Drop every cached permission.
+     * What the card needs and nothing else: the four routes it calls, the entities it may hand
+     * out, the locale, the theme, the token. The payload of the panel carries every route and
+     * every screen, and a page of the application that shows an account is not the place to
+     * print them. `write` is the answer of widgetWritable() for this owner; `readOnly` is the
+     * choice of the page.
      *
-     * Called after each write. Not surgical — the package caches per owner, and a change to a role
-     * reaches everyone who inherits from it, so working out the exact set costs more than
-     * re-resolving does.
-     *
-     * @return void
+     * @param array{title?:?string, compact?:bool, write?:bool} $options
      */
-    public function flushCache()
+    public function widgetPayload(OwnerContract $owner, array $options = []): array
     {
-        app(AccessRulesContract::class)->clearAllCachedPermissions();
+        $n     = $this->routeName();
+        $theme = $this->config('theme', 'auto');
+
+        $entities = [];
+        foreach ($this->entitiesWith('assignable') as $key => $entity) {
+            $entities[] = ['key' => $key, 'label' => __($entity['label']), 'single' => __($entity['single']), 'assignable' => true];
+        }
+
+        return [
+            'locale'    => str_replace('_', '-', app()->getLocale()),
+            'theme'     => in_array($theme, ['light', 'dark'], true) ? $theme : 'auto',
+            'csrfToken' => csrf_token(),
+            'picker'    => ['perPage' => (int) $this->config('picker.per_page', 15)],
+            'entities'  => $entities,
+            'routes'    => [
+                'inherit'       => route($n.'inherit.index', ['owner' => '__OWNER__']),
+                'inheritAdd'    => route($n.'inherit.store', ['owner' => '__OWNER__']),
+                'inheritRemove' => route($n.'inherit.destroy', ['owner' => '__OWNER__', 'link' => '__LINK__']),
+                'pick'          => route($n.'pick'),
+            ],
+            'owner'    => (int) $owner->getKey(),
+            'title'    => $options['title'] ?? null,
+            'compact'  => (bool) ($options['compact'] ?? false),
+            'readOnly' => array_key_exists('write', $options) && ! $options['write'],
+            'write'    => $this->widgetWritable($owner),
+        ];
     }
 }

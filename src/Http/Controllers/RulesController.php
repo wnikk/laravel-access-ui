@@ -1,206 +1,227 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Wnikk\LaravelAccessUi\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule as ValidationRule;
-use Wnikk\LaravelAccessRules\Contracts\AccessRules as AccessRulesContract;
+use Wnikk\LaravelAccessRules\Administration\RuleCatalog;
+use Wnikk\LaravelAccessRules\Conditions\Cond;
+use Wnikk\LaravelAccessRules\Contracts\AccessManager;
+use Wnikk\LaravelAccessRules\Contracts\Permission as PermissionContract;
 use Wnikk\LaravelAccessRules\Contracts\Rule as RuleContract;
-use Wnikk\LaravelAccessUi\Support\RuleSpec;
+use Wnikk\LaravelAccessRules\Exceptions\AccessRulesException;
+use Wnikk\LaravelAccessRules\Models\RuleOrigin;
 use Wnikk\LaravelAccessUi\Support\RuleTree;
 
 /**
- * Rules: the vocabulary the rest of the application checks against.
+ * Rules: the names the application checks against.
  *
- * A rule is a guard name such as `content.posts.publish`. Rules form a tree through `parent_id`, but
- * the tree is presentation only — access-rules does not grant a parent because a child was granted.
- * Container rows exist to organise a long list.
- *
- * Deleting is two-stage on purpose. A soft delete deactivates the rule: the row and its permissions
- * stay, and every check against that guard name starts answering no. That is reversible, and it is
- * what you want when you are not certain the name is gone from the code. A forced delete is the
- * irreversible one — access-rules re-parents the children and drops the permissions with it.
+ * A rule has an origin. One that comes with code is created and removed by a migration, and the
+ * panel may change its title, description, place in the tree and options, nothing else; the
+ * core refuses the rest with RULE_MANAGED_BY_CODE. A rule the panel creates is "custom", for abilities whose names code
+ * builds at run time. Deleting is for good and is refused while somebody holds the rule.
  */
 class RulesController extends BaseController
 {
-    /** @var string */
-    protected $screen = 'rules';
+    protected string $screen = 'rules';
+
+    protected array $reading = ['index', 'holders'];
 
     /**
-     * Every rule as a flat list, deactivated ones included.
-     *
-     * Flat because the tree is a presentation concern: building it here would mean choosing an order
-     * and a depth limit on behalf of a screen that may want neither. Deactivated rules are included
-     * and marked, because a rule that still holds permissions should not vanish from the only screen
-     * that could tell you so.
-     *
-     * @param RuleContract $rule
-     * @return JsonResponse
+     * Every rule as a flat list. The tree is a presentation concern: building it here would mean
+     * choosing an order and a depth on behalf of every screen at once.
      */
     public function index(RuleContract $rule): JsonResponse
     {
         $list = $rule->newQuery()
-            ->withTrashed()
+            ->withCount('permission as holders_count')
             ->orderBy('parent_id')
             ->orderBy('guard_name')
-            ->get(['id', 'parent_id', 'guard_name', 'options', 'title', 'description', 'created_at', 'deleted_at'])
-            ->map(static function ($row) {
-                return [
-                    'id'          => (int) $row->id,
-                    'parent_id'   => (int) $row->parent_id,
-                    'guard_name'  => $row->guard_name,
-                    'options'     => $row->options,
-                    'title'       => $row->title ? __($row->title) : null,
-                    'description' => $row->description ? __($row->description) : null,
-                    'created_at'  => $row->created_at,
-                    'deleted_at'  => $row->deleted_at,
-                ];
-            })
+            ->get()
+            ->map(fn ($row): array => $this->present($row))
             ->values();
 
         return $this->ok('', [
-            'list'  => $list,
-            'write' => $this->ui->screenWritable('rules'),
+            'list'      => $list,
+            'resources' => array_keys((array) config('access.resources', [])),
+            'write'     => $this->ui->screenWritable('rules'),
         ]);
     }
 
-    /**
-     * @param Request $request
-     * @param RuleContract $rule
-     * @return JsonResponse
-     */
-    public function store(Request $request, RuleContract $rule): JsonResponse
+    public function store(Request $request, AccessManager $access): JsonResponse
     {
-        $data = $this->validated($request, $rule, null);
+        $data = $this->validated($request, null);
 
-        $created = app(AccessRulesContract::class)::newRule(
+        $id = $access->newRule(
             $data['guard_name'],
             $data['title'],
             $data['description'],
             $data['parent_id'] ?: null,
-            $data['options']
+            $data['options'],
+            $data['resource'],
+            $data['when'],
+            RuleOrigin::Custom,
         );
 
-        if (!$created) {
+        if (! $id) {
             return $this->err(__('The rule could not be created.'), [], 500);
         }
 
-        $this->ui->flushCache();
-
-        return $this->ok(__('Rule created'));
+        return $this->ok(__('Rule created'), ['id' => $id]);
     }
 
     /**
-     * @param Request $request
-     * @param RuleContract $rule
-     * @param int|string $id
-     * @return JsonResponse
+     * Only the fields that changed reach the core. A rule of code accepts title, description and
+     * options; sending its unchanged name along would make the core refuse the whole edit.
      */
-    public function update(Request $request, RuleContract $rule, $id): JsonResponse
+    public function update(Request $request, RuleContract $rule, RuleCatalog $catalog, int $id): JsonResponse
     {
-        $target = $rule->newQuery()->withTrashed()->findOrFail((int) $id);
-        $data   = $this->validated($request, $rule, (int) $target->id);
+        $target = $rule->newQuery()->findOrFail($id);
+        $data   = $this->validated($request, $id);
 
-        // A rule cannot be its own parent, nor sit under one of its own descendants.
-        if ($data['parent_id'] > 0 && RuleTree::wouldCycle((int) $target->id, $data['parent_id'])) {
-            return $this->err(__('A rule cannot be placed inside its own branch.'), [
-                'parent_id' => [__('A rule cannot be placed inside its own branch.')],
-            ]);
+        if ($data['parent_id'] > 0 && RuleTree::wouldCycle($id, $data['parent_id'])) {
+            return $this->err(__('A rule cannot be placed inside its own branch.'), ['parent_id' => [__('A rule cannot be placed inside its own branch.')]]);
         }
 
-        $target->update($data);
-        $this->ui->flushCache();
+        $current = [
+            'guard_name'  => $target->guard_name,
+            'title'       => $target->title,
+            'description' => $target->description,
+            'options'     => $target->options,
+            'resource'    => $target->resource,
+            'parent_id'   => (int) $target->parent_id,
+            'when'        => Cond::describe($target->condition, $target->resource),
+        ];
+
+        $changed = array_filter($data, static fn (mixed $value, string $field): bool => $value !== $current[$field], ARRAY_FILTER_USE_BOTH);
+
+        // The catalogue of the core decides what a rule of code may change: title, description,
+        // options and, while the tree does not inherit, the place in the tree. Its refusal names the
+        // field and comes back by code.
+        if ($changed !== []) {
+            $catalog->edit($target->guard_name, $changed);
+        }
 
         return $this->ok(__('Rule updated'));
     }
 
     /**
-     * Deactivate a rule, or erase it when `force` is asked for.
-     *
-     * @param Request $request
-     * @param RuleContract $rule
-     * @param int|string $id
-     * @return JsonResponse
+     * Deleted for good, through the catalogue, so a rule of code and a rule somebody holds are
+     * refused. The second refusal carries who holds it: the screen shows them instead of a dead end.
      */
-    public function destroy(Request $request, RuleContract $rule, $id): JsonResponse
+    public function destroy(RuleContract $rule, RuleCatalog $catalog, int $id): JsonResponse
     {
-        $target = $rule->newQuery()->withTrashed()->findOrFail((int) $id);
-        $force  = $request->boolean('force');
+        $target = $rule->newQuery()->findOrFail($id);
 
-        if ($force) {
-            $target->forceDelete();
-        } else {
-            $target->delete();
+        try {
+            $catalog->discard($target->guard_name);
+        } catch (AccessRulesException $e) {
+            return $this->refused($e, $e->getCode() === AccessRulesException::RULE_IN_USE ? $this->holdersOf($target, 1, 10) : null);
         }
 
-        $this->ui->flushCache();
-
-        return $this->ok($force ? __('Rule deleted') : __('Rule deactivated'));
+        return $this->ok(__('Rule deleted'));
     }
 
     /**
-     * Bring a deactivated rule back, with the permissions it still holds.
-     *
-     * @param RuleContract $rule
-     * @param int|string $id
-     * @return JsonResponse
+     * Who holds a rule, with the condition of each grant. Paged: a rule of a menu is held by everyone.
      */
-    public function restore(RuleContract $rule, $id): JsonResponse
+    public function holders(Request $request, RuleContract $rule, int $id): JsonResponse
     {
-        $target = $rule->newQuery()->withTrashed()->findOrFail((int) $id);
-        $target->restore();
+        $params = $this->pageParams($request);
 
-        $this->ui->flushCache();
+        return $this->ok('', $this->holdersOf($rule->newQuery()->findOrFail($id), $params['page'], $params['per_page']));
+    }
 
-        return $this->ok(__('Rule restored'));
+    private function holdersOf(RuleContract $rule, int $page, int $perPage): array
+    {
+        $paginator = app(PermissionContract::class)->newQuery()
+            ->with('owner')
+            ->where('rule_id', $rule->getKey())
+            ->orderBy('owner_id')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        $rows = [];
+        foreach ($paginator->items() as $permission) {
+            if ($permission->owner === null) {
+                continue;
+            }
+
+            $rows[] = $this->ui->presentOwner($permission->owner, [
+                'effect' => $permission->permission ? 'allow' : 'deny',
+                'option' => $permission->option,
+                'when'   => Cond::describe($permission->condition, $rule->resource),
+            ]);
+        }
+
+        return [
+            'rule' => $rule->guard_name,
+            'rows' => $rows,
+            'meta' => ['current_page' => $paginator->currentPage(), 'last_page' => $paginator->lastPage(), 'per_page' => $paginator->perPage(), 'total' => $paginator->total()],
+        ];
+    }
+
+    private function present(RuleContract $row): array
+    {
+        return [
+            'id'            => (int) $row->getKey(),
+            'parent_id'     => (int) $row->parent_id,
+            'guard_name'    => $row->guard_name,
+            'options'       => $row->options,
+            'resource'      => $row->resource,
+            'when'          => Cond::describe($row->condition, $row->resource),
+            'origin'        => $row->origin->value,
+            'managed'       => $row->origin->isManagedByCode(),
+            'title'         => $row->title ? __($row->title) : null,
+            'description'   => $row->description ? __($row->description) : null,
+            'holders_count' => (int) $row->holders_count,
+            'created_at'    => $row->created_at,
+        ];
     }
 
     /**
-     * Shared validation, and the two normalisations the column types demand.
+     * The option spec is a Laravel validation string that the core applies to every option value
+     * granted on the rule. One that cannot compile is refused here, where it was typed, and not
+     * later on somebody else's screen. Whether the condition compiles the core decides when it saves.
      *
-     * `parent_id` is a non-nullable integer defaulting to 0, so "no parent" is 0 and not null.
-     * `options` is a validation-rule string that access-rules applies to every option value granted
-     * on this rule, so a spec that cannot compile is refused here rather than crashing later.
-     *
-     * @param Request $request
-     * @param RuleContract $rule
-     * @param int|null $ignoreId
-     * @return array
+     * @return array{guard_name:string, parent_id:int, options:?string, resource:?string, when:?string, title:?string, description:?string}
      */
-    protected function validated(Request $request, RuleContract $rule, $ignoreId): array
+    private function validated(Request $request, ?int $ignoreId): array
     {
-        $table  = $rule->getTable();
+        $table  = app(RuleContract::class)->getTable();
         $unique = ValidationRule::unique($table, 'guard_name');
-
         if ($ignoreId !== null) {
             $unique->ignore($ignoreId);
         }
 
-        // Not `exists:` — the parent may itself be deactivated, and moving a rule under a
-        // deactivated container is a legitimate thing to do while tidying up.
-        $parentExists = static function ($attribute, $value, $fail) use ($rule) {
-            if (RuleTree::normaliseParent($value) > 0
-                && !$rule->newQuery()->withTrashed()->whereKey((int) $value)->exists()
-            ) {
-                $fail(__('The selected parent rule does not exist.'));
-            }
-        };
-
         $data = $request->validate([
-            'guard_name'  => ['required', 'string', 'max:128', $unique],
-            'parent_id'   => ['nullable', 'integer', 'min:0', $parentExists],
-            'options'     => ['nullable', 'string', 'max:255', RuleSpec::validator()],
+            'guard_name' => ['required', 'string', 'max:128', $unique],
+            'parent_id'  => ['nullable', 'integer', 'min:0', ValidationRule::when(RuleTree::normaliseParent($request->input('parent_id')) > 0, ['exists:'.$table.',id'])],
+            'options'    => ['nullable', 'string', 'max:255', function (string $attribute, mixed $value, \Closure $fail): void {
+                try {
+                    validator(['option' => '1'], ['option' => $value])->passes();
+                } catch (\Throwable) {
+                    $fail(__('The option spec must be a valid Laravel validation string.'));
+                }
+            }],
+            'resource'    => ['nullable', 'string', 'max:64', ValidationRule::in(array_keys((array) config('access.resources', [])))],
+            'when'        => ['nullable', 'string', 'max:16384'],
             'title'       => ['nullable', 'string', 'max:128'],
             'description' => ['nullable', 'string', 'max:255'],
         ]);
 
+        $blank = static fn (?string $value): ?string => ($value ?? '') === '' ? null : $value;
+
         return [
             'guard_name'  => $data['guard_name'],
             'parent_id'   => RuleTree::normaliseParent($data['parent_id'] ?? null),
-            'options'     => ($data['options'] ?? '') === '' ? null : $data['options'],
-            'title'       => ($data['title'] ?? '') === '' ? null : $data['title'],
-            'description' => ($data['description'] ?? '') === '' ? null : $data['description'],
+            'options'     => $blank($data['options'] ?? null),
+            'resource'    => $blank($data['resource'] ?? null),
+            'when'        => $blank($data['when'] ?? null),
+            'title'       => $blank($data['title'] ?? null),
+            'description' => $blank($data['description'] ?? null),
         ];
     }
 }

@@ -1,40 +1,28 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Wnikk\LaravelAccessUi\Http\Controllers;
 
+use Illuminate\Contracts\View\View;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\View;
 use Wnikk\LaravelAccessUi\AccessUi;
 
 /**
- * The one HTML response in the package.
- *
- * Renders the shell the interface mounts into, either inside the host's layout or as a standalone
- * page when no layout is named. Everything after that is JSON: the page carries no data beyond the
- * bootstrap payload, so it is dull by design and cheap to cache.
+ * The one HTML response of the package: the shell the interface mounts into, inside the layout of
+ * the host or as a standalone page. The page carries no data beyond the bootstrap payload, so it
+ * is dull by design and cheap to cache. Everything after it is JSON.
  */
 class PanelController extends Controller
 {
-    /** @var AccessUi */
-    protected $ui;
+    public function __construct(private readonly AccessUi $ui) {}
 
-    /**
-     * @param AccessUi $ui
-     */
-    public function __construct(AccessUi $ui)
-    {
-        $this->ui = $ui;
-    }
-
-    /**
-     * @return \Illuminate\Contracts\View\View
-     */
-    public function index()
+    public function index(): View
     {
         $layout = $this->ui->config('layout.view');
         $inside = is_string($layout) && $layout !== '';
 
-        return View::make($inside ? 'accessUi::embedded' : 'accessUi::standalone', [
+        return view($inside ? 'accessUi::embedded' : 'accessUi::standalone', [
             'layout'    => $layout,
             'section'   => (string) $this->ui->config('layout.section', 'content'),
             'title'     => __((string) $this->ui->config('layout.title', 'Access control')),

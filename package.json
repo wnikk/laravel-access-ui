@@ -1,7 +1,7 @@
 {
     "name": "laravel-access-ui",
-    "version": "2.0.0",
-    "description": "Framework-agnostic user interface for access control rules.",
+    "version": "3.0.0",
+    "description": "Administration screens for wnikk/laravel-access-rules 3.x. One script, one stylesheet, no CDN.",
     "files": [
         "dist"
     ],
@@ -17,6 +17,8 @@
         "roles",
         "acl",
         "rbac",
+        "abac",
+        "xacml",
         "vue"
     ],
     "repository": {
@@ -30,10 +32,11 @@
     },
     "license": "MIT",
     "devDependencies": {
-        "@vitejs/plugin-vue": "^4.0.0",
-        "vite": "^4.0.2"
+        "@vitejs/plugin-vue": "^6.0.0",
+        "vite": "^7.0.0"
     },
     "dependencies": {
-        "vue": "^3.2.47"
-    }
+        "vue": "^3.5.0"
+    },
+    "private": true
 }

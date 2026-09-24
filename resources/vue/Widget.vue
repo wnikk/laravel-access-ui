@@ -7,22 +7,25 @@
         <div ref="notices" class="wacu-notices"></div>
 
         <!--
-            Numbers, not contents. How much this account ends up with is worth knowing on a user page;
-            which rules those are is the permissions screen's job, and putting them here would make a
-            card into a page.
+            Numbers, not contents. How much this account holds is worth knowing on a user page;
+            which rules those are is the job of the permissions screen.
 
-            The gap between the two figures is the useful part. Nothing assigned and a non-zero total
-            means somebody granted this account something directly — "no roles" and "no rights" are not
-            the same statement, and this is where that difference shows up.
+            The gap between the figures is the useful part: something of its own with nothing
+            assigned is an account somebody hand-tuned. "Depends on the record" counts the rows
+            that carry a condition; what they answer for one record is a question for "explain".
         -->
         <div class="wacu-figures">
-            <span class="wacu-figure">
-                <span class="wacu-figure-value">{{ permissions.effective }}</span>
-                <span class="wacu-figure-label">{{ t('widget.effective') }}</span>
+            <span class="wacu-figure" :title="t('widget.inheritedHint')">
+                <span class="wacu-figure-value">{{ permissions.inherited }}</span>
+                <span class="wacu-figure-label">{{ t('widget.inherited') }}</span>
             </span>
-            <span v-if="permissions.direct" class="wacu-figure">
-                <span class="wacu-figure-value">{{ permissions.direct }}</span>
-                <span class="wacu-figure-label">{{ t('widget.direct') }}</span>
+            <span v-if="permissions.own" class="wacu-figure" :title="t('widget.ownHint')">
+                <span class="wacu-figure-value">{{ permissions.own }}</span>
+                <span class="wacu-figure-label">{{ t('widget.own') }}</span>
+            </span>
+            <span v-if="permissions.conditional" class="wacu-figure" :title="t('widget.conditionalHint')">
+                <span class="wacu-figure-value">{{ permissions.conditional }}</span>
+                <span class="wacu-figure-label">{{ t('widget.conditional') }}</span>
             </span>
             <span v-if="permissions.forbidden" class="wacu-figure">
                 <span class="wacu-figure-value">{{ permissions.forbidden }}</span>

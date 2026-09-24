@@ -1,0 +1,33 @@
+# Laravel Access UI (wnikk/laravel-access-ui), version 3
+
+> The administration panel of wnikk/laravel-access-rules 3.x for Laravel 13+ / PHP 8.4+: rules, owners, permissions with conditions, inheritance, the explanation of one check, a health check of stored conditions, XACML export and import, and one card for a page of the application that shows an account. One script and one stylesheet published into public/, nothing from a CDN. The panel decides nothing about access: it calls the core and draws the answer.
+
+Install: `composer require wnikk/laravel-access-ui`, publish `accessUi-config` and `accessUi-assets`, set `routes.prefix` and `routes.middleware` in `config/accessUi.php`. Nothing is registered until both are set; the middleware must name what marks an administrator.
+
+```php
+'routes' => ['prefix' => 'access-control', 'middleware' => ['web', 'auth', 'can:manage-access']],
+'layout' => ['view' => 'layouts.admin', 'section' => 'content', 'title' => 'Access control'],
+```
+
+```blade
+@accessUiWidget(['owner' => $user])   {{-- the card: what the account inherits from, four counts; renders nothing while the routes are off --}}
+```
+
+The panel knows no model of the application. Owners are rows of the owner table of the core, addressed by id; a page gets it from `$user->getOwner()->id`. Rules that code checks by name are created in migrations, never in the panel; the panel creates `custom` rules for names code builds at run time and refuses to rename or delete a rule of code.
+
+## Documentation
+
+- [Installation](installation.md): requirements, publishing, the routes and the gate, a first check
+- [Configuration](configuration.md): routes, layout and theme, assets, entities, screens with `enabled`, `write` and `ability`, the policy of the card, translations, pickers, upload size
+- [Screens](screens.md): rules and their origin, owners, the permissions of one owner and the five-step labels, inheritance, "Why?", health, XACML
+- [The assignment card](widget.md): the Blade directive, the four numbers, who may change what it shows, what travels to the page, the routes behind it
+- [The editor of conditions](conditions-editor.md): autocompletion from the models, the check by the compiler of the core, aggregates
+- [XACML](xacml.md): download, the plan of an import, replace and partial
+- [Routes and the envelope](routes.md): every route with its body, the envelope, codes of the core and their status
+- [Upgrade from 2.0 to 3.0](upgrade-2-to-3.md)
+
+The language of conditions, the priority of permissions and the core API are documented by the core: https://github.com/wnikk/laravel-access-rules/blob/main/docs/llms.txt
+
+## For coding agents inside an application
+
+The package ships a Laravel Boost guideline and a skill (`resources/boost/`), installed by `php artisan boost:install`. The rules they teach: turn the routes on with a middleware that marks an administrator; create rules of code in migrations; republish the bundle after an upgrade; put the card on a user page with the owner id from the trait of the core; narrow screens with `write` and `ability`.

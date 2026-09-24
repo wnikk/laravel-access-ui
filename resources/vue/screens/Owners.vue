@@ -45,7 +45,7 @@
 
                 <label class="wacu-search">
                     <Icon name="search" />
-                    <input v-model="search" type="search" class="wacu-input" :placeholder="t('app.filter')" />
+                    <input v-model="search" type="search" class="wacu-input" :placeholder="t('app.filter')" @input="searchLater" />
                 </label>
             </div>
 
@@ -62,11 +62,13 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="owner in visible" :key="owner.id">
+                        <tr v-for="owner in rows" :key="owner.id">
                             <td>{{ owner.title }}</td>
                             <td><code class="wacu-code">{{ owner.original_id }}</code></td>
                             <td>
                                 <span class="wacu-tag">{{ owner.type_label }}</span>
+                                <span v-if="owner.tenant" class="wacu-tag" :title="t('owners.tenantHint')">{{ t('owners.tenant') }}</span>
+                                <span v-if="owner.guest" class="wacu-tag wacu-tag-warn" :title="t('owners.guestHint')">{{ t('owners.guest') }}</span>
                                 <!-- Not one of the configured entities: it is here because it holds a
                                      permission of its own, which is worth knowing about. -->
                                 <span v-if="!owner.managed" class="wacu-sub" :title="t('owners.notManagedHint')">
@@ -101,6 +103,9 @@
                                 >
                                     {{ t('nav.inherit') }}
                                 </button>
+                                <button v-if="owner.inheritors_count" type="button" class="wacu-btn" :title="t('owners.heirsHint')" @click="showHeirs(owner)">
+                                    {{ t('owners.heirs') }} · {{ owner.inheritors_count }}
+                                </button>
                                 <template v-if="write">
                                     <button type="button" class="wacu-btn" @click="openRename(owner)">
                                         {{ t('owners.rename') }}
@@ -116,7 +121,7 @@
                             </td>
                         </tr>
 
-                        <tr v-if="!visible.length">
+                        <tr v-if="!rows.length">
                             <td colspan="6" class="wacu-center">
                                 <p class="wacu-empty">{{ t('app.nothingMatches') }}</p>
                             </td>
@@ -124,12 +129,32 @@
                     </tbody>
                 </table>
             </div>
+
+            <div v-if="meta.last_page > 1" class="wacu-pager">
+                <button type="button" class="wacu-btn" :disabled="meta.current_page <= 1" @click="go(meta.current_page - 1)"><Icon name="left" /></button>
+                <span class="wacu-muted">{{ meta.current_page }} / {{ meta.last_page }} · {{ meta.total }}</span>
+                <button type="button" class="wacu-btn" :disabled="meta.current_page >= meta.last_page" @click="go(meta.current_page + 1)"><Icon name="right" /></button>
+            </div>
         </div>
+
+        <!-- Who is affected by a change to this owner: everyone that inherits from it, at any depth. -->
+        <Modal :open="heirs.open" :title="t('owners.heirsOf', { name: heirs.owner })" @close="nav.closeModal()">
+            <ul class="wacu-assign-list">
+                <li v-for="row in heirs.rows" :key="row.id" class="wacu-assign-item">
+                    <span class="wacu-assign-main">
+                        <button type="button" class="wacu-link" @click="$emit('open', 'permissions', row.id)">{{ row.title }}</button>
+                        <span class="wacu-tag">{{ row.type_label }}</span>
+                    </span>
+                </li>
+                <li v-if="!heirs.rows.length" class="wacu-assign-item"><p class="wacu-empty">{{ t('owners.noHeirs') }}</p></li>
+            </ul>
+            <p v-if="heirs.meta.total > heirs.rows.length" class="wacu-muted">{{ t('app.showingOf', { shown: heirs.rows.length, total: heirs.meta.total }) }}</p>
+        </Modal>
 
         <Modal
             :open="createOpen"
             :title="t('owners.addTitle', { entity: createEntityLabel })"
-            @close="createOpen = false"
+            @close="nav.closeModal()"
         >
             <label v-if="creatable.length > 1" class="wacu-field">
                 <span class="wacu-label">{{ t('owners.kind') }}</span>
@@ -158,7 +183,7 @@
             </label>
 
             <template #foot>
-                <button type="button" class="wacu-btn" @click="createOpen = false">
+                <button type="button" class="wacu-btn" @click="nav.closeModal()">
                     {{ t('app.cancel') }}
                 </button>
                 <button type="button" class="wacu-btn wacu-btn-primary" @click="create">
@@ -167,17 +192,21 @@
             </template>
         </Modal>
 
-        <Modal :open="renameOpen" :title="t('owners.renameTitle')" @close="renameOpen = false">
-            <p class="wacu-muted">
-                <code class="wacu-code">{{ renaming && renaming.original_id }}</code>
-            </p>
+        <Modal :open="renameOpen" :title="t('owners.renameTitle')" @close="nav.closeModal()">
+            <dl class="wacu-facts">
+                <dt>{{ t('owners.kind') }}</dt>
+                <dd>{{ renaming && renaming.type_label }}</dd>
+                <dt>{{ t('owners.identifier') }}</dt>
+                <dd><code class="wacu-code">{{ renaming && renaming.original_id }}</code></dd>
+            </dl>
             <label class="wacu-field">
                 <span class="wacu-label">{{ t('owners.name') }}</span>
                 <input v-model="renameName" type="text" class="wacu-input" />
+                <span class="wacu-hint">{{ t('owners.nameHint') }}</span>
             </label>
 
             <template #foot>
-                <button type="button" class="wacu-btn" @click="renameOpen = false">
+                <button type="button" class="wacu-btn" @click="nav.closeModal()">
                     {{ t('app.cancel') }}
                 </button>
                 <button type="button" class="wacu-btn wacu-btn-primary" @click="rename">
@@ -189,7 +218,7 @@
 </template>
 
 <script setup>
-import { computed, inject, onMounted, ref } from 'vue';
+import { computed, inject, onMounted, ref, watch } from 'vue';
 import Icon from '../ui/Icon.vue';
 import Modal from '../ui/Modal.vue';
 import { del, get, post, put, query, url } from '../../js/libs/api.js';
@@ -204,18 +233,24 @@ import { t } from '../../js/libs/i18n.js';
  * cannot take it away.
  *
  * Renaming and deleting are offered on every row, including those. This screen works on the owner table,
- * and deleting an owner row takes away its permissions and assignments — not the user, the team, or
- * whatever else it stood for in the application's own tables.
+ * and deleting an owner row takes away its permissions and assignments; the user, the team, or whatever
+ * else it stood for in the tables of the application stays.
  */
 const config = inject('acuConfig');
+const route = inject('acuRoute');
+const nav = inject('acuNav');
 
 defineEmits(['open']);
 
 const card = ref(null);
 const rows = ref([]);
+const meta = ref({ current_page: 1, last_page: 1, total: 0 });
 const write = ref(false);
 const entity = ref('all');
 const search = ref('');
+const heirs = ref({ open: false, owner: '', rows: [], meta: { total: 0 } });
+
+let debounce = null;
 
 const createOpen = ref(false);
 const createForm = ref({ entity: '', original_id: '', name: '' });
@@ -233,41 +268,93 @@ const createEntityLabel = computed(() => {
     return found ? found.single : '';
 });
 
-const visible = computed(() => {
-    const term = search.value.trim().toLowerCase();
-
-    if (!term) return rows.value;
-
-    return rows.value.filter(
-        (owner) =>
-            String(owner.title || '').toLowerCase().includes(term) ||
-            String(owner.original_id || '').toLowerCase().includes(term)
-    );
-});
-
-async function load() {
-    const endpoint = query(config.routes.owners, { entity: entity.value });
+/**
+ * Paged and searched on the server: a list of users is the size of the application.
+ */
+async function load(page = 1) {
+    const endpoint = query(config.routes.owners, { entity: entity.value, search: search.value.trim(), page });
     const data = await get(endpoint, { lock: card.value, status: config.noticeHost });
 
     if (data === null) return;
 
-    rows.value = data.list || [];
+    rows.value = data.rows || [];
+    meta.value = data.meta || meta.value;
     write.value = !!data.write;
+}
+
+function go(page) {
+    load(page);
+}
+
+function searchLater() {
+    clearTimeout(debounce);
+    debounce = setTimeout(() => load(1), 300);
 }
 
 function select(key) {
     entity.value = key;
-    load();
+    load(1);
+}
+
+/*
+ * The windows of this screen are named in the hash ("new", "rename/7", "heirs/7") and opened by
+ * it, so the back button closes them and a pasted link opens one straight away. An owner named by
+ * the hash may be on another page of the list; the route of heirs returns the owner too.
+ */
+function showHeirs(owner) {
+    nav.openModal('heirs', owner.id);
 }
 
 function openCreate() {
-    createForm.value = {
-        entity: creatable.value.length ? creatable.value[0].key : '',
-        original_id: '',
-        name: '',
-    };
-    createOpen.value = true;
+    nav.openModal('new');
 }
+
+function openRename(owner) {
+    nav.openModal('rename', owner.id);
+}
+
+async function loadHeirs(id) {
+    const data = await get(url(config.routes.ownerHeirs, { OWNER: id }) + '?limit=100', { status: config.noticeHost });
+
+    if (data === null) return nav.closeModal();
+
+    heirs.value = { open: true, owner: data.owner ? data.owner.title : '', rows: data.rows || [], meta: data.meta || { total: 0 } };
+}
+
+async function ownerNamed(id) {
+    const found = rows.value.find((row) => row.id === id);
+    if (found) return found;
+
+    const data = await get(url(config.routes.ownerHeirs, { OWNER: id }) + '?limit=1', { silent: true, quiet: true });
+
+    return data && data.owner ? data.owner : null;
+}
+
+watch(
+    () => [route.modal, route.modalId],
+    async () => {
+        createOpen.value = route.modal === 'new';
+        if (route.modal === 'new') {
+            createForm.value = { entity: creatable.value.length ? creatable.value[0].key : '', original_id: '', name: '' };
+        }
+
+        if (route.modal === 'rename') {
+            const owner = await ownerNamed(Number(route.modalId));
+            if (!owner) return nav.closeModal();
+
+            renaming.value = owner;
+            renameName.value = owner.name || '';
+        }
+        renameOpen.value = route.modal === 'rename' && renaming.value !== null;
+
+        if (route.modal === 'heirs') {
+            await loadHeirs(Number(route.modalId));
+        } else {
+            heirs.value.open = false;
+        }
+    },
+    { immediate: true }
+);
 
 async function create() {
     const data = await post(config.routes.ownerCreate, createForm.value, {
@@ -276,14 +363,8 @@ async function create() {
 
     if (data === null) return;
 
-    createOpen.value = false;
-    load();
-}
-
-function openRename(owner) {
-    renaming.value = owner;
-    renameName.value = owner.name || '';
-    renameOpen.value = true;
+    nav.closeModal();
+    load(meta.value.current_page);
 }
 
 async function rename() {
@@ -292,8 +373,8 @@ async function rename() {
 
     if (data === null) return;
 
-    renameOpen.value = false;
-    load();
+    nav.closeModal();
+    load(meta.value.current_page);
 }
 
 async function destroy(owner) {
@@ -303,8 +384,8 @@ async function destroy(owner) {
         status: config.noticeHost,
     });
 
-    if (data !== null) load();
+    if (data !== null) load(meta.value.current_page);
 }
 
-onMounted(load);
+onMounted(() => load(1));
 </script>

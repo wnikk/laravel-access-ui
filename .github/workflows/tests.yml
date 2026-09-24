@@ -1,0 +1,75 @@
+name: tests
+
+# Runs when something the tests or the bundle can see has changed.
+on:
+  push:
+    branches: [main, 3.x]
+    paths: ['src/**', 'tests/**', 'config/**', 'routes/**', 'resources/**', 'dist/**', 'composer.json', 'phpunit.xml', 'package.json', 'package-lock.json', 'vite.config.js', '.github/workflows/tests.yml']
+  pull_request:
+    paths: ['src/**', 'tests/**', 'config/**', 'routes/**', 'resources/**', 'dist/**', 'composer.json', 'phpunit.xml', 'package.json', 'package-lock.json', 'vite.config.js', '.github/workflows/tests.yml']
+
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    name: PHP ${{ matrix.php }} / ${{ matrix.db }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.4']
+        db: [sqlite, pgsql]
+
+    services:
+      postgres:
+        image: postgres:17
+        env: { POSTGRES_PASSWORD: secret, POSTGRES_DB: acu_test }
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: laravel-access-ui
+
+      # composer.json names the core as a path repository next to this package, so the suite runs
+      # against the core of today and not only against the last tag.
+      - uses: actions/checkout@v5
+        with:
+          repository: wnikk/laravel-access-rules
+          path: laravel-access-rules
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, zip, pdo_sqlite, pdo_pgsql
+          coverage: none
+
+      - run: composer install --no-interaction --prefer-dist --no-progress
+        working-directory: laravel-access-ui
+
+      - name: Tests
+        run: ./vendor/bin/phpunit
+        working-directory: laravel-access-ui
+        env:
+          DB_CONNECTION: ${{ matrix.db }}
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: ${{ matrix.db == 'sqlite' && ':memory:' || 'acu_test' }}
+          DB_USERNAME: postgres
+          DB_PASSWORD: secret
+
+  bundle:
+    runs-on: ubuntu-24.04
+    name: dist is built from source
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      # dist/ is committed so an application installs the panel without Node. A build that
+      # changes it means somebody edited the sources and forgot to rebuild.
+      - run: git diff --exit-code -- dist/

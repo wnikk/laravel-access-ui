@@ -703,6 +703,46 @@
     color: var(--wacu-text-soft);
 }
 
+/* What a form shows and does not edit: a label and a value that reads as one, no input. */
+.wacu-facts {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.35rem 1rem;
+    margin: 0 0 1rem;
+    padding: 0.6rem 0.8rem;
+    background: var(--wacu-bg-soft);
+    border: 1px solid var(--wacu-border);
+    border-radius: var(--wacu-radius);
+}
+
+.wacu-facts dt {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--wacu-text-soft);
+}
+
+.wacu-facts dd {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.wacu-form-title {
+    margin: 0.25rem 0 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--wacu-text-soft);
+}
+
+.wacu-form-note {
+    display: flex;
+    gap: 0.35rem;
+    align-items: flex-start;
+    margin: 0 0 0.6rem;
+}
+
 .wacu-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
@@ -1072,4 +1112,190 @@
 .wacu-picker-list > .aj-loader-parent .aj-circular > .path,
 .wacu-list > .aj-loader-parent .aj-circular > .path {
     stroke: var(--wacu-accent);
+}
+
+/* ----------------------------------------------------------------- 3.0: conditions, plans, figures */
+
+/* The chips of the permissions matrix: one per row that reaches the owner. Inherited ones are softer. */
+.wacu-root .wacu-chip {
+    cursor: default;
+    max-width: 100%;
+    white-space: normal;
+}
+
+.wacu-root .wacu-chip-soft {
+    opacity: 0.7;
+    border-style: dashed;
+}
+
+.wacu-root .wacu-chip .wacu-code {
+    font-size: 0.75rem;
+}
+
+/* The rows of an owner inside the window of one rule; the one in the fields is marked. */
+.wacu-root .wacu-own-rows {
+    margin-bottom: 1rem;
+}
+
+/* A long condition would fold the chip over three or four lines; it is cut instead, with the whole text in the title. */
+.wacu-root .wacu-chip-when {
+    display: inline-block;
+    max-width: 16rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+}
+
+.wacu-root .wacu-chip-x {
+    display: inline-flex;
+    padding: 0 0.1rem;
+    margin-left: 0.15rem;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+    opacity: 0.7;
+}
+
+.wacu-root .wacu-chip-x:hover {
+    opacity: 1;
+}
+
+.wacu-root .wacu-tag-warn {
+    color: var(--wacu-warn);
+    background: var(--wacu-warn-bg);
+    border-color: var(--wacu-warn);
+}
+
+.wacu-root .wacu-tag-origin-code {
+    opacity: 0.8;
+}
+
+.wacu-root .wacu-tag-origin-custom {
+    color: var(--wacu-accent);
+    border-color: var(--wacu-accent);
+}
+
+.wacu-root .wacu-tag-origin-import {
+    color: var(--wacu-warn);
+    border-color: var(--wacu-warn);
+}
+
+.wacu-root .wacu-btn-on-soft {
+    color: var(--wacu-on);
+}
+
+.wacu-root .wacu-btn-no-soft {
+    color: var(--wacu-no);
+}
+
+/* Text of a condition, wherever it is shown */
+.wacu-root .wacu-when {
+    display: inline-block;
+    max-width: 100%;
+    padding: 0.05rem 0.3rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: var(--wacu-bg-soft);
+    border-radius: calc(var(--wacu-radius) / 2);
+}
+
+/* The editor: a field, a list of suggestions under the caret, a status line */
+.wacu-root .wacu-condition {
+    position: relative;
+}
+
+.wacu-root .wacu-condition-input {
+    width: 100%;
+    font-family: var(--wacu-mono);
+    font-size: 0.9rem;
+    resize: vertical;
+}
+
+.wacu-root .wacu-suggest {
+    position: absolute;
+    z-index: 5;
+    left: 0;
+    right: 0;
+    max-height: 14rem;
+    margin: 0.15rem 0 0;
+    padding: 0.25rem 0;
+    overflow: auto;
+    list-style: none;
+    background: var(--wacu-bg);
+    border: 1px solid var(--wacu-border-strong);
+    border-radius: var(--wacu-radius);
+    box-shadow: 0 6px 20px var(--wacu-shade);
+}
+
+.wacu-root .wacu-suggest-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.25rem 0.6rem;
+    cursor: pointer;
+}
+
+.wacu-root .wacu-suggest-item:hover,
+.wacu-root .wacu-suggest-on {
+    background: var(--wacu-bg-hover);
+}
+
+.wacu-root .wacu-condition-status {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    min-height: 1.4rem;
+    margin: 0.35rem 0 0;
+    font-size: 0.8rem;
+    color: var(--wacu-text-soft);
+}
+
+.wacu-root .wacu-condition-ok {
+    color: var(--wacu-on);
+}
+
+.wacu-root .wacu-condition-bad {
+    color: var(--wacu-no);
+}
+
+/* Paged lists */
+.wacu-root .wacu-pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--wacu-gap);
+    padding: 0.6rem;
+    border-top: 1px solid var(--wacu-border);
+}
+
+.wacu-root .wacu-card-body {
+    padding: 0.9rem 1rem;
+    border-top: 1px solid var(--wacu-border);
+}
+
+.wacu-root .wacu-card-body:first-child {
+    border-top: 0;
+}
+
+.wacu-root .wacu-plain-list {
+    margin: 0.4rem 0;
+    padding-left: 1.2rem;
+}
+
+.wacu-root .wacu-row-on > td {
+    background: var(--wacu-on-bg);
+}
+
+.wacu-root .wacu-table-tight td {
+    padding: 0.2rem 0.6rem;
+}
+
+.wacu-root .wacu-notice-ok {
+    color: var(--wacu-on);
+    background: var(--wacu-on-bg);
+    border-color: var(--wacu-on);
 }

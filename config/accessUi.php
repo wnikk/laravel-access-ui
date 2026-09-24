@@ -47,7 +47,7 @@ return [
     |
     | Name a Blade layout and the panel renders inside it, so the section is
     | part of your admin area from the first request. Leave it null and the
-    | panel serves its own standalone page instead — enough to work with, and
+    | panel serves its own standalone page instead: enough to work with, and
     | not something to keep once the section has a home.
     |
     | The layout has to yield the named section and nothing else; the panel
@@ -127,7 +127,7 @@ return [
     |   type        Label passed to access-rules. Must also be listed in
     |               config/access.php under `owner_types`. Null means "whatever
     |               this application calls a user", read from
-    |               auth.providers.users.model — the class name is used as a
+    |               auth.providers.users.model; the class name is used as a
     |               string, the class itself is never loaded.
     |   label       Plural name shown in the interface.
     |   single      Singular name shown in the interface.
@@ -188,8 +188,11 @@ return [
     |
     |   rules        the guard names the application checks against
     |   owners       the owner records, and from there their permissions
-    |   permissions  allow or forbid each rule for one owner
+    |   permissions  allow or forbid each rule for one owner, with conditions
     |   inherit      who inherits from whom
+    |   explain      why a check answers what it answers
+    |   health       stored conditions and rules against the models of today
+    |   xacml        export and import of policies
     |
     | Each can be switched off, and each write can be put behind a Gate ability.
     | A screen that is off is hidden AND its endpoints answer 403, so the markup
@@ -200,35 +203,50 @@ return [
     | Worth a thought for rules: they are the vocabulary the rest of the
     | application checks against, so a renamed guard name silently stops
     | matching the code that asks for it. Setting `write` to false leaves the
-    | tree browsable while writes answer 403 — rules then change only through
+    | tree browsable while writes answer 403; rules then change only through
     | migrations, which is where a vocabulary belongs.
     |
     */
     'screens' => [
+        'rules'       => ['enabled' => true, 'write' => true, 'ability' => null],
+        'owners'      => ['enabled' => true, 'write' => true, 'ability' => null],
+        'permissions' => ['enabled' => true, 'write' => true, 'ability' => null],
+        'inherit'     => ['enabled' => true, 'write' => true, 'ability' => null],
 
-        'rules' => [
-            'enabled' => true,
-            'write'   => true,
-            'ability' => null,
-        ],
+        // New in 3.0. "explain" shows rules of every owner, "health" checks stored conditions
+        // against models, "xacml" exports and imports the whole set. They are on, like the
+        // rest: whoever passed the middleware of the group administers access. Name an
+        // ability here to narrow one of them to fewer people.
+        'explain'     => ['enabled' => true, 'write' => true, 'ability' => null],
+        'health'      => ['enabled' => true, 'write' => true, 'ability' => null],
+        'xacml'       => ['enabled' => true, 'write' => true, 'ability' => null],
+    ],
 
-        'owners' => [
-            'enabled' => true,
-            'write'   => true,
-            'ability' => null,
-        ],
-
-        'permissions' => [
-            'enabled' => true,
-            'write'   => true,
-            'ability' => null,
-        ],
-
-        'inherit' => [
-            'enabled' => true,
-            'write'   => true,
-            'ability' => null,
-        ],
+    /*
+    |--------------------------------------------------------------------------
+    | The assignment card
+    |--------------------------------------------------------------------------
+    |
+    | @accessUiWidget on a page of the application. It reads and writes the
+    | links of inheritance of one owner through the routes of the inheritance
+    | screen, so that screen has to be on. What the card may change is decided
+    | here, on top of the screen:
+    |
+    |   write     false makes every card read-only: it shows where the account
+    |             takes its rights from and offers no buttons.
+    |   ability   a Gate ability checked for the owner of the card, so the
+    |             answer can depend on who asks and about whom:
+    |
+    |             Gate::define('assign-access', fn (User $user, Owner $owner) => $user->is_admin);
+    |
+    | A single card can be made read-only where it is placed:
+    | @accessUiWidget(['owner' => $user, 'write' => false]). That is a choice of
+    | the page; the two settings above are what the server enforces.
+    |
+    */
+    'widget' => [
+        'write'   => true,
+        'ability' => null,
     ],
 
     /*
@@ -248,5 +266,19 @@ return [
 
         // Send the whole list with the screen while it is no longer than this.
         'inline_limit' => 100,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | XACML
+    |--------------------------------------------------------------------------
+    |
+    | The largest policy an upload may carry, in kilobytes. The core refuses
+    | DOCTYPE and never reads the network, so the size is the one thing left
+    | to bound here.
+    |
+    */
+    'xacml' => [
+        'max_upload_kb' => 10240,
     ],
 ];

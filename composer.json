@@ -1,22 +1,20 @@
 {
     "name": "wnikk/laravel-access-ui",
-    "version": "2.0.0",
-    "description": "Interface of simple ACR (Access Control Rules) for Laravel.",
+    "version": "3.0.0",
+    "description": "Administration screens for wnikk/laravel-access-rules 3.x: rules, owners, permissions with conditions, inheritance, explain, health and XACML. One script, one stylesheet, no CDN.",
     "license": "MIT",
     "keywords": [
-        "wnikk",
         "laravel",
-        "permission",
         "permissions",
         "roles",
-        "rules",
         "acl",
         "rbac",
-        "manager",
-        "security",
+        "abac",
+        "access-control",
+        "admin",
         "ui",
         "vue",
-        "crud"
+        "xacml"
     ],
     "authors": [
         {
@@ -30,30 +28,29 @@
         "url": "https://github.com/wnikk/laravel-access-ui/issues"
     },
     "require": {
-        "php": ">=7.4",
-        "illuminate/auth": "^8.0|*",
-        "illuminate/container": "^8.0|*",
-        "illuminate/contracts": "^8.0|*",
-        "illuminate/database": "^8.0|*",
-        "illuminate/console": "^8.0|*",
-        "illuminate/support": "^8.0|*",
-        "illuminate/validation": "^8.0|*",
-        "wnikk/laravel-access-rules": "^2.0"
+        "php": "^8.4",
+        "illuminate/contracts": "^13.0",
+        "illuminate/database": "^13.0",
+        "illuminate/http": "^13.0",
+        "illuminate/routing": "^13.0",
+        "illuminate/support": "^13.0",
+        "illuminate/validation": "^13.0",
+        "illuminate/view": "^13.0",
+        "wnikk/laravel-access-rules": "^3.2.4"
     },
     "require-dev": {
+        "orchestra/testbench": "*",
+        "phpunit/phpunit": "*"
     },
-    "minimum-stability": "dev",
     "prefer-stable": true,
     "autoload": {
         "psr-4": {
             "Wnikk\\LaravelAccessUi\\": "src"
-        },
-        "files": [
-        ]
+        }
     },
     "autoload-dev": {
         "psr-4": {
-            "Wnikk\\LaravelAccessUi\\Test\\": "tests"
+            "Tests\\": "tests"
         }
     },
     "config": {

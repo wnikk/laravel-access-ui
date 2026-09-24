@@ -1,4 +1,4 @@
-import './httpUi.js';
+import httpUi from './httpUi.js';
 import { notify } from './notify.js';
 
 /**
@@ -56,17 +56,23 @@ function headers() {
  * @param {string} method
  * @param {string} url
  * @param {Object|null} data
- * @param {{lock: ?HTMLElement, status: ?HTMLElement, silent: ?boolean}} [ui]
+ * @param {{lock: ?HTMLElement, status: ?HTMLElement, silent: ?boolean, quiet: ?boolean}} [ui]
  * @returns {Promise<Object|null>} the envelope's `data`, or null when the request failed
  */
 export async function request(method, url, data, ui) {
-    const client = window.httpUi;
+    const envelope = await attempt(method, url, data, ui);
 
-    if (!client) {
-        console.error('[accessUi] httpUi is missing from the bundle.');
-        return null;
-    }
+    return envelope.ok ? envelope.data : null;
+}
 
+/**
+ * The whole envelope, success or failure. httpUi has shown the failure already; a caller reads
+ * this when the failure carries something to draw, such as who holds a rule that could not be deleted.
+ *
+ * @returns {Promise<{ok: boolean, message: string, code: ?string, errors: Object, data: Object}>}
+ */
+export async function attempt(method, url, data, ui) {
+    const client = httpUi;
     const where = ui || {};
     const params = {
         method,
@@ -78,6 +84,12 @@ export async function request(method, url, data, ui) {
     if (where.lock) params.contextLock = where.lock;
     if (where.status) params.contextStatus = where.status;
 
+    // Quiet: no loader and no alert. For checks that run while somebody types; the caller draws the answer.
+    if (where.quiet) {
+        params.contextLock = false;
+        params.onError = () => {};
+    }
+
     // Never for GET: fetch refuses a GET with a body, and httpUi would otherwise scrape the
     // surrounding element for form fields when `data` is left undefined.
     if (method !== 'GET') params.data = data || {};
@@ -87,7 +99,15 @@ export async function request(method, url, data, ui) {
     try {
         answer = await client.request(params);
     } catch (failed) {
-        return null;
+        // A refused request comes back as the query with the response on it. Anything else is a
+        // mistake of the bundle itself, and must not pass as a quiet refusal.
+        if (failed instanceof Error) {
+            console.error('[accessUi]', failed);
+        }
+
+        const body = (failed && failed.response && failed.response.data) || {};
+
+        return { ok: false, message: body.message || '', code: body.code || null, errors: body.errors || {}, data: body.data || {} };
     }
 
     const envelope = answer.data || {};
@@ -103,7 +123,7 @@ export async function request(method, url, data, ui) {
     }
 
     // `data` is null on a bare acknowledgement; an object keeps callers from having to check.
-    return envelope.data === null || envelope.data === undefined ? {} : envelope.data;
+    return { ok: true, message: envelope.message || '', code: null, errors: {}, data: envelope.data === null || envelope.data === undefined ? {} : envelope.data };
 }
 
 /**
@@ -138,10 +158,11 @@ export function put(url, data, ui) {
 /**
  * @param {string} url
  * @param {Object} [ui]
+ * @param {Object} [data] a body, for the one route that names what to delete in it
  * @returns {Promise<Object|null>}
  */
-export function del(url, ui) {
-    return request('DELETE', url, {}, ui);
+export function del(url, ui, data) {
+    return request('DELETE', url, data || {}, ui);
 }
 
 /**
@@ -183,4 +204,17 @@ export function query(base, params) {
     if (!pairs.length) return base;
 
     return base + (base.indexOf('?') === -1 ? '?' : '&') + pairs.join('&');
+}
+
+/**
+ * A multipart POST, for the one screen that sends a file. httpUi leaves FormData to the browser,
+ * which sets the boundary itself.
+ *
+ * @param {string} url
+ * @param {FormData} form
+ * @param {Object} [ui]
+ * @returns {Promise<Object|null>}
+ */
+export function upload(url, form, ui) {
+    return request('POST', url, form, ui);
 }

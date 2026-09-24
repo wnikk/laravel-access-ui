@@ -36,13 +36,15 @@ const defaults = {
     entities: [],
     picker: { perPage: 15, inlineLimit: 100 },
     problems: {},
+    ruleTree: false,
+    readOnly: false,
     routes: {},
 };
 
 /**
  * Turn whatever the page passed in into the config every component expects.
  *
- * Reactive because `noticeHost` is filled in after mount — the element httpUi should draw its error
+ * Reactive because `noticeHost` is filled in after mount: the element httpUi should draw its error
  * boxes into only exists once the component is on the page.
  *
  * @param {Object} options
@@ -57,6 +59,9 @@ function makeConfig(options) {
             owners: { enabled: false, write: false },
             permissions: { enabled: false, write: false },
             inherit: { enabled: false, write: false },
+            explain: { enabled: false, write: false },
+            health: { enabled: false, write: false },
+            xacml: { enabled: false, write: false },
         },
         merged.screens || {}
     );
@@ -187,7 +192,7 @@ const accessUi = {
 };
 
 // A global rather than an export: the bundle is built as an IIFE and loaded with a plain
-// `<script src>`, which is the whole point — a page gets the interface by adding two files, with no
+// `<script src>`, which is the whole point: a page gets the interface by adding two files, with no
 // module loader, no import map and no build step of its own. A project that would rather bundle it
 // can import this file from source instead of the built one.
 if (typeof window !== 'undefined' && !window.accessUi) {

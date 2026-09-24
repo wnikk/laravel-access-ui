@@ -15,6 +15,16 @@ const bundles = { en };
 
 let locale = 'en';
 
+// Translations a page put on `window.accessUiMessages` before the bundle loaded, keyed by locale.
+// The bundle mounts as soon as it runs, so a script that comes after it would be too late for the
+// first render; a global set before it is the one way to be early without a build step.
+if (typeof window !== 'undefined' && window.accessUiMessages && typeof window.accessUiMessages === 'object') {
+    Object.keys(window.accessUiMessages).forEach((name) => {
+        const messages = window.accessUiMessages[name];
+        if (messages && typeof messages === 'object') bundles[name] = Object.assign({}, bundles[name] || {}, messages);
+    });
+}
+
 /**
  * Add or override messages for one locale.
  *
