@@ -14,10 +14,10 @@ composer install                              # the core comes from ../laravel-a
 DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_DATABASE=acu_test DB_USERNAME=postgres ./vendor/bin/phpunit
 DB_CONNECTION=mysql DB_HOST=127.0.0.1 DB_DATABASE=acu_test DB_USERNAME=root ./vendor/bin/phpunit
 ../laravel-access-rules/vendor/bin/pint --test --config pint.json src/Some/File.php   # only files you created or edited, never the whole project
-npm ci && npm run build                       # rebuilds dist/, which is committed; CI compares dist/ with a fresh build
+npm install && npm run build                  # rebuilds dist/, which is committed; no lock file, CI only checks that the sources build
 ```
 
-Run the suite on SQLite and PostgreSQL after a change to a query (`Support/OwnerReader`, `AccessUi::searchOwners`). After a change under `resources/js` or `resources/vue`, rebuild `dist/` and open the panel on a stand in a browser: the tests never load the bundle, and a broken transport shows no error on the server (decision U12 in `_dev/04-decisions.md`).
+Run the suite on SQLite and PostgreSQL after a change to a query (`Support/OwnerReader`, `AccessUi::searchOwners`). After a change under `resources/js` or `resources/vue`, rebuild `dist/` and commit it, then open the panel on a stand in a browser: the tests never load the bundle, CI does not compare `dist/` with a build, and a broken transport shows no error on the server (decision U12 in `_dev/04-decisions.md`).
 
 ## Layout
 

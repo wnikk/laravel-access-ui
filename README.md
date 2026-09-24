@@ -141,7 +141,7 @@ Put that before the bundle and the first render is translated; `accessUi.addMess
 ## Building from source
 
 ```bash
-npm ci
+npm install
 npm run build
 ```
 

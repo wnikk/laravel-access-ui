@@ -60,16 +60,15 @@ jobs:
 
   bundle:
     runs-on: ubuntu-24.04
-    name: dist is built from source
+    name: the sources build
 
+    # Only that the sources compile. dist/ is committed and is not compared with this build:
+    # a comparison would pin every dependency through a lock file, and the package does not
+    # want that constraint. Rebuilding dist/ after a change to the sources is on the author.
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-      - run: npm ci
+      - run: npm install --no-audit --no-fund
       - run: npm run build
-      # dist/ is committed so an application installs the panel without Node. A build that
-      # changes it means somebody edited the sources and forgot to rebuild.
-      - run: git diff --exit-code -- dist/
