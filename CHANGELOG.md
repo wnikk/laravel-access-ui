@@ -2,7 +2,7 @@
 
 All notable changes to `laravel-access-ui` will be documented in this file
 
-## 3.1.0 - 2026-09-27
+## 3.1.1 - 2026-09-27
 
 Needs `wnikk/laravel-access-rules` 3.3.4.
 
