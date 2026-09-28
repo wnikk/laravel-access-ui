@@ -57,9 +57,10 @@ Route::post('conditions/check', [ConditionsController::class, 'check'])->name('c
 // "Why?": the explanation of one check
 Route::get('explain', [ExplainController::class, 'index'])->name('explain');
 
-// Health: what acr:lint finds, as data; and the cache
+// Health: what acr:lint and acr:doctor find, as data; and the cache
 Route::get('health', [HealthController::class, 'index'])->name('health.index');
 Route::post('health/fix', [HealthController::class, 'fix'])->name('health.fix');
+Route::post('health/doctor', [HealthController::class, 'doctor'])->name('health.doctor');
 Route::post('cache/flush', [HealthController::class, 'flush'])->name('cache.flush');
 
 // XACML: download, look, import

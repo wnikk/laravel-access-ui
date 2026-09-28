@@ -8,6 +8,7 @@
             <div class="wacu-nowrap">
                 <button type="button" class="wacu-btn" @click="load">{{ t('health.check') }}</button>
                 <button v-if="write" type="button" class="wacu-btn" :title="t('health.fixHint')" @click="fix">{{ t('health.fix') }}</button>
+                <button v-if="write" type="button" class="wacu-btn" :title="t('health.doctorHint')" :disabled="!rows.length" @click="doctor">{{ t('health.doctor') }}</button>
                 <button v-if="write" type="button" class="wacu-btn" :title="t('health.flushHint')" @click="flush">{{ t('health.flush') }}</button>
             </div>
         </header>
@@ -40,6 +41,39 @@
                 </table>
             </div>
         </div>
+
+        <!-- The doctor: rows the core would never have written. Not what a migration broke, but what a
+             hand, a restore or an upgrade from 2.x left behind. -->
+        <div ref="rowsCard" class="wacu-card">
+            <div class="wacu-card-head">
+                <h3 class="wacu-card-title">{{ t('health.rows') }}</h3>
+            </div>
+            <p class="wacu-muted">{{ t('health.rowsIntro') }}</p>
+
+            <p v-if="loaded && !rows.length" class="wacu-notice wacu-notice-ok">
+                <Icon name="check" />
+                {{ t('health.rowsGood') }}
+            </p>
+
+            <div v-else-if="rows.length" class="wacu-table-wrap">
+                <table class="wacu-table">
+                    <thead>
+                        <tr>
+                            <th class="wacu-col-narrow">{{ t('health.code') }}</th>
+                            <th>{{ t('health.where') }}</th>
+                            <th class="wacu-col-wide">{{ t('health.problem') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(row, index) in rows" :key="index">
+                            <td><span class="wacu-tag wacu-tag-warn">{{ t('health.codes.' + row.code) }}</span></td>
+                            <td>{{ row.where }}</td>
+                            <td>{{ row.problem }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </section>
 </template>
 
@@ -50,17 +84,21 @@ import { get, post } from '../../js/libs/api.js';
 import { t } from '../../js/libs/i18n.js';
 
 /**
- * What acr:lint finds, drawn. Conditions are checked when they are saved; then a migration renames
- * a column or a model leaves config, and nothing says so until somebody loses access. "Fix" saves
- * again what only changed its column types. The cache button is for changes made past the core,
- * straight in the tables; every change through the panel turns the cache over by itself.
+ * What acr:lint and acr:doctor find, drawn. Conditions are checked when they are saved; then a
+ * migration renames a column or a model leaves config, and nothing says so until somebody loses
+ * access. "Fix" saves again what only changed its column types. The doctor lists rows the core would
+ * never have written and deletes duplicates and orphans on request; a loop of inheritance it leaves
+ * to a person. The cache button is for changes made past the core, straight in the tables; every
+ * change through the panel turns the cache over by itself.
  */
 defineEmits(['open']);
 
 const config = inject('acuConfig');
 
 const card = ref(null);
+const rowsCard = ref(null);
 const problems = ref([]);
+const rows = ref([]);
 const write = ref(false);
 const loaded = ref(false);
 
@@ -70,12 +108,21 @@ async function load() {
     if (data === null) return;
 
     problems.value = data.problems || [];
+    rows.value = data.rows || [];
     write.value = !!data.write;
     loaded.value = true;
 }
 
 async function fix() {
     const data = await post(config.routes.healthFix, {}, { lock: card.value, status: config.noticeHost });
+
+    if (data !== null) load();
+}
+
+async function doctor() {
+    if (!window.confirm(t('health.doctorConfirm'))) return;
+
+    const data = await post(config.routes.healthDoctor, {}, { lock: rowsCard.value, status: config.noticeHost });
 
     if (data !== null) load();
 }

@@ -32,6 +32,7 @@ For a page of your own that talks to the panel. The routes exist only when `rout
 | GET | `explain` | `explain` | `owner, ability, record` |
 | GET | `health` | `health.index` | |
 | POST | `health/fix` | `health.fix` | |
+| POST | `health/doctor` | `health.doctor` | deletes duplicate permissions and rows that point at nothing |
 | POST | `cache/flush` | `cache.flush` | |
 | GET | `xacml/export` | `xacml.export` | the policy document |
 | POST | `xacml/check` | `xacml.check` | multipart `policy`; `replace, partial` |

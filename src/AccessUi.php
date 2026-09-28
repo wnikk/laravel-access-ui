@@ -493,6 +493,7 @@ class AccessUi
             'explain'        => route($n.'explain'),
             'health'         => route($n.'health.index'),
             'healthFix'      => route($n.'health.fix'),
+            'healthDoctor'   => route($n.'health.doctor'),
             'cacheFlush'     => route($n.'cache.flush'),
             'xacmlExport'    => route($n.'xacml.export'),
             'xacmlCheck'     => route($n.'xacml.check'),

@@ -36,7 +36,7 @@
         "illuminate/support": "^13.0",
         "illuminate/validation": "^13.0",
         "illuminate/view": "^13.0",
-        "wnikk/laravel-access-rules": "^3.3"
+        "wnikk/laravel-access-rules": "^3.3.4"
     },
     "require-dev": {
         "orchestra/testbench": "*",

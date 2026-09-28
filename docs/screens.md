@@ -66,6 +66,8 @@ When the owner is a user, the panel loads that user for the check, because condi
 
 What `acr:lint` finds, as a table: a stored condition that names a column a migration renamed, a model that left `config/access.php`, a rule whose resource is unknown. Each finding names where it is and opens the permissions of that owner. "Fix" saves again the conditions whose column types changed. The cache button drops cached permissions; every change through the panel turns the cache over by itself, the button is for rows changed with plain SQL.
 
+A second table lists what `acr:doctor` finds: rows the core would never have written, from SQL typed by hand, a partial restore or an upgrade from 2.x. Duplicate permissions, permissions and links that point at nothing, loops of inheritance. "Delete stray rows" removes the duplicates past the first copy and the orphans; a loop stays, because only a person knows which link is wrong.
+
 ## XACML
 
 ![XACML](art/panel-xacml.png)

@@ -78,6 +78,25 @@ class ToolsTest extends TestCase
         $this->api('POST', '/cache/flush')->assertOk();
     }
 
+    public function test_health_lists_rows_the_core_would_never_write_and_deletes_them_on_request(): void
+    {
+        $ids = $this->seedAccess();
+        $this->api('GET', '/health')->assertOk()->assertJsonPath('data.rows', []);
+
+        // A second copy of a permission without an option, written past the core
+        $table = config('access.table_names.permission');
+        $row   = (array) \Illuminate\Support\Facades\DB::table($table)->where('owner_id', $ids['user'])->orWhere('owner_id', $ids['role'])->whereNull('option')->first();
+        unset($row['id']);
+        \Illuminate\Support\Facades\DB::table($table)->insert($row);
+
+        $rows = $this->api('GET', '/health')->assertOk()->json('data.rows');
+        $this->assertSame(['duplicate'], array_column($rows, 'code'));
+        $this->assertStringContainsString('stored 2 times', $rows[0]['problem']);
+
+        $this->api('POST', '/health/doctor')->assertOk()->assertJsonPath('data.fixed', 1);
+        $this->api('GET', '/health')->assertJsonPath('data.rows', []);
+    }
+
     public function test_xacml_export_check_and_import_from_the_browser(): void
     {
         $ids = $this->seedAccess();

@@ -26,7 +26,7 @@ One script and one stylesheet, published into `public/`. No CSS framework, no CD
 | **Permissions** | for one owner, rule by rule: every permit and prohibition that reaches it, each with its condition; Allow, Forbid, With condition |
 | **Inheritance** | who inherits from whom |
 | **Why?** | one check explained: every permission that took part, the one that decided, what its condition read |
-| **Health** | what `acr:lint` finds, with "fix" and a cache button |
+| **Health** | what `acr:lint` and `acr:doctor` find, with "fix", "delete stray rows" and a cache button |
 | **XACML** | download the policy; upload one and see what it would change before importing |
 | **The card** | on a user page: what the account inherits from, what may be assigned, four numbers |
 
@@ -53,7 +53,7 @@ Kept from 2.0: styles under `wacu-`, light and dark, a layout of yours or a bare
 
 - PHP 8.4 or newer
 - Laravel 13 or newer
-- `wnikk/laravel-access-rules` 3.3 or newer, installed and migrated
+- `wnikk/laravel-access-rules` 3.3.4 or newer, installed and migrated
 
 For an older application: `composer require wnikk/laravel-access-ui:^2.0`.
 

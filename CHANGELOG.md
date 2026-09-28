@@ -2,6 +2,12 @@
 
 All notable changes to `laravel-access-ui` will be documented in this file
 
+## 3.1.0 - 2026-09-27
+
+Needs `wnikk/laravel-access-rules` 3.3.4.
+
+- Health: what `acr:doctor` finds, as a second table, with "Delete stray rows"
+
 ## 3.0.1 - 2026-09-24
 
 Rewritten for `wnikk/laravel-access-rules` 3.2+, Laravel 13+ and PHP 8.4+. The configuration of 2.0 stays valid, the routes and the bundle changed: [upgrade guide](docs/upgrade-2-to-3.md).
