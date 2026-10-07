@@ -29,13 +29,17 @@ class OwnersController extends BaseController
      */
     public function index(Request $request): JsonResponse
     {
-        $request->validate(['entity' => ['nullable', 'string', 'max:64']]);
+        $request->validate(['entity' => ['nullable', 'string', 'max:64'], 'types' => ['nullable', 'string', 'max:256'], 'has' => ['nullable', 'string', 'max:64']]);
+
         $params = $this->pageParams($request);
 
         $entityKey = (string) $request->input('entity', '');
         $query     = $entityKey !== '' && $entityKey !== 'all'
             ? $this->ui->ownerQuery()->where('type', $this->ui->entity($entityKey)['type_id'])
             : $this->ui->listedOwnerQuery();
+
+        // "types" and "has" are the filters of the inheritance screen: several kinds at once, and only rows that have inheritors
+        $this->ui->narrowOwners($query, self::list($request->input('types')), self::list($request->input('has')));
 
         $query->withCount([
             'permission as permissions_count',
@@ -46,6 +50,12 @@ class OwnersController extends BaseController
         $page = $this->ui->searchOwners($query, $params['search'], $params['page'], $params['per_page']);
 
         return $this->ok('', $page + ['write' => $this->ui->screenWritable('owners')]);
+    }
+
+    /** @return list<string> "a,b" as ['a', 'b'] */
+    private static function list(mixed $value): array
+    {
+        return array_values(array_filter(array_map('trim', explode(',', (string) $value)), static fn (string $v): bool => $v !== ''));
     }
 
     /**

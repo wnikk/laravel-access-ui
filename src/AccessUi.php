@@ -357,6 +357,46 @@ class AccessUi
     }
 
     /**
+     * Narrows a list of owners the way the filters of the screens ask: "types" is a list of entity
+     * keys, with "other" for owners of a type outside the configuration that hold something; "has"
+     * names what a row must have: "inheritors", "sources" or "permissions". Unknown keys are ignored.
+     *
+     * @param list<string> $types
+     * @param list<string> $has
+     */
+    public function narrowOwners(Builder $query, array $types, array $has): Builder
+    {
+        $typeIds = [];
+        $other   = false;
+        foreach ($types as $key) {
+            if ($key === 'other') {
+                $other = true;
+            } elseif (isset($this->entities()[$key])) {
+                $typeIds[] = $this->entities()[$key]['type_id'];
+            }
+        }
+        if ($typeIds !== [] || $other) {
+            $configured = $this->configuredTypeIds();
+            $query->where(static function (Builder $inner) use ($typeIds, $other, $configured): void {
+                $inner->whereIn('type', $typeIds ?: [-1]);
+                if ($other) {
+                    $inner->orWhere(static fn (Builder $rest) => $rest->whereNotIn('type', $configured ?: [-1])->has('permission'));
+                }
+            });
+        }
+        foreach ($has as $flag) {
+            match ($flag) {
+                'inheritors'  => $query->has('inheritanceParent'),
+                'sources'     => $query->has('inheritance'),
+                'permissions' => $query->has('permission'),
+                default       => null,
+            };
+        }
+
+        return $query;
+    }
+
+    /**
      * Owners that may be handed out as a source of rights: the configured "assignable" types only.
      * Holding a permission does not widen this set; what may be assigned is a decision.
      */

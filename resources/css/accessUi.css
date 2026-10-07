@@ -511,6 +511,16 @@
     cursor: default;
 }
 
+/* A row of filter chips under the head of a card or above a picker list */
+.wacu-filter-chips {
+    display: flex;
+    margin: 0 0 0.6rem;
+}
+
+.wacu-chip-gap {
+    width: 0.5rem;
+}
+
 .wacu-chip-on {
     color: var(--wacu-on);
     background: var(--wacu-on-bg);

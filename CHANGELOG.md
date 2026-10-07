@@ -2,6 +2,11 @@
 
 All notable changes to `laravel-access-ui` will be documented in this file
 
+## 3.1.7 - 2026-10-07
+
+- Inheritance: the sources of rights are filtered by kind
+- Rules: the checkbox "leftovers of 2.x" is gone
+
 ## 3.1.1 - 2026-09-27
 
 Needs `wnikk/laravel-access-rules` 3.3.4.

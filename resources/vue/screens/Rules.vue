@@ -22,10 +22,6 @@
                     <Icon name="search" />
                     <input v-model="search" type="search" class="wacu-input" :placeholder="t('rules.filterPlaceholder')" />
                 </label>
-                <label class="wacu-check">
-                    <input v-model="leftovers" type="checkbox" />
-                    <span>{{ t('rules.leftovers') }}</span>
-                </label>
                 <span class="wacu-muted">{{ visible.length }} / {{ rows.length }}</span>
             </div>
 
@@ -233,7 +229,6 @@ const resources = ref([]);
 const write = ref(false);
 const loaded = ref(false);
 const search = ref('');
-const leftovers = ref(false);
 const formOpen = ref(false);
 const editing = ref(null);
 const managed = ref(false);
@@ -247,9 +242,6 @@ function blank() {
 const visible = computed(() => {
     const term = search.value.trim().toLowerCase();
     let list = rows.value;
-
-    // Rules that 2.x had soft deleted came back from the upgrade under this prefix.
-    if (leftovers.value) list = list.filter((rule) => String(rule.guard_name).startsWith('deprecated__'));
 
     if (!term) return list;
 

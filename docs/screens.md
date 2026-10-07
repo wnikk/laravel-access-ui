@@ -48,7 +48,7 @@ A long condition on a chip is cut; the whole text is in the tooltip.
 
 ## Inheritance
 
-Who inherits from whom. The left side lists the sources of rights: the configured entities and any owner that holds something. Pick one, and the right side lists who inherits from it, with what those links drag in behind them: an account that inherits from a role which inherits from another is reached through the first link. Indirect rows are marked with the direct link they came through; that link is the one to remove. Any owner of the table may be added as an inheritor.
+Who inherits from whom. The left side lists the sources of rights: the configured entities and any owner that holds something. By default only sources somebody inherits from are shown; the chip "with inheritors" turns that off, and the chips of the kinds narrow the list to roles, groups, users, or "other", owners of a type outside the configuration that hold something. The dialog that adds an inheritor has the same chips of kinds next to its search. Pick a source, and the right side lists who inherits from it, with what those links drag in behind them: an account that inherits from a role which inherits from another is reached through the first link. Indirect rows are marked with the direct link they came through; that link is the one to remove. Any owner of the table may be added as an inheritor.
 
 The other direction, what one account inherits from, is the [assignment card](widget.md), which sits on a page of the application.
 

@@ -11,6 +11,21 @@
             />
         </label>
 
+        <!-- Kinds to show. None pressed means every kind of the scope. -->
+        <div v-if="kinds.length > 1" class="wacu-chips wacu-filter-chips">
+            <button
+                v-for="kind in kinds"
+                :key="kind.key"
+                type="button"
+                class="wacu-chip"
+                :class="{ 'wacu-chip-on': types.includes(kind.key) }"
+                :aria-pressed="types.includes(kind.key)"
+                @click="toggleType(kind.key)"
+            >
+                {{ kind.label }}
+            </button>
+        </div>
+
         <div ref="listBox" class="wacu-picker-list">
             <button
                 v-for="row in rows"
@@ -83,11 +98,14 @@ const props = defineProps({
     exclude: { type: Array, default: () => [] },
     perPage: { type: Number, default: 15 },
     emptyText: { type: String, default: '' },
+    /** Kinds to offer as chips: [{ key, label }]. Comes from the configured entities of the scope. */
+    kinds: { type: Array, default: () => [] },
 });
 
 defineEmits(['close', 'choose']);
 
 const term = ref('');
+const types = ref([]);
 const rows = ref([]);
 const listBox = ref(null);
 const meta = ref({ current_page: 1, last_page: 1, total: 0 });
@@ -98,6 +116,7 @@ async function load(page) {
     const url = query(props.endpoint, {
         scope: props.scope,
         exclude: props.exclude.join(','),
+        types: types.value.join(','),
         page: page || 1,
         limit: props.perPage,
         search: term.value,
@@ -117,6 +136,11 @@ function onType() {
     debounce = setTimeout(() => load(1), 350);
 }
 
+function toggleType(key) {
+    types.value = types.value.includes(key) ? types.value.filter((k) => k !== key) : [...types.value, key];
+    load(1);
+}
+
 function step(delta) {
     const next = meta.value.current_page + delta;
 
@@ -132,6 +156,7 @@ watch(
         if (!isOpen) return;
 
         term.value = '';
+        types.value = [];
         rows.value = [];
         load(1);
     }

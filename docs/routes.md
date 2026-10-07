@@ -15,7 +15,7 @@ For a page of your own that talks to the panel. The routes exist only when `rout
 | PUT | `rules/{id}` | `rules.update` | the same; a rule of code accepts `title, description, parent_id, options` |
 | DELETE | `rules/{id}` | `rules.destroy` | refused while somebody holds the rule, `data.holders` lists them |
 | GET | `rules/{id}/holders` | `rules.holders` | `page, limit` |
-| GET | `owners` | `owners.index` | `entity, search, page, limit` |
+| GET | `owners` | `owners.index` | `entity, types: keys of entities as "role,user" ("other" for owners of a type outside the configuration that hold something), has: inheritors\|sources\|permissions, search, page, limit` |
 | POST | `owners` | `owners.store` | `entity, original_id, name` |
 | PUT | `owners/{owner}` | `owners.update` | `name` |
 | DELETE | `owners/{owner}` | `owners.destroy` | |
@@ -26,7 +26,7 @@ For a page of your own that talks to the panel. The routes exist only when `rout
 | GET | `owners/{owner}/inherit` | `inherit.index` | `direction: parents\|children` |
 | POST | `owners/{owner}/inherit` | `inherit.store` | `direction, target` |
 | DELETE | `owners/{owner}/inherit/{link}` | `inherit.destroy` | |
-| GET | `pick` | `pick` | `scope: assignable\|all\|listed, search, exclude, page, limit` |
+| GET | `pick` | `pick` | `scope: assignable\|all\|listed, types, search, exclude, page, limit` |
 | GET | `conditions/vocabulary` | `conditions.vocabulary` | |
 | POST | `conditions/check` | `conditions.check` | `when, resource` |
 | GET | `explain` | `explain` | `owner, ability, record` |

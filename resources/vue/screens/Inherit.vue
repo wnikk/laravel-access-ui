@@ -19,6 +19,33 @@
                     </label>
                 </div>
 
+                <!-- Filters: rows that have inheritors (on by default, a source nobody inherits from is
+                     noise here), and the kinds to show; no kind pressed means every kind. -->
+                <div class="wacu-chips wacu-filter-chips">
+                    <button
+                        type="button"
+                        class="wacu-chip"
+                        :class="{ 'wacu-chip-on': withInheritors }"
+                        :aria-pressed="withInheritors"
+                        :title="t('inherit.withInheritorsHint')"
+                        @click="toggleInheritors"
+                    >
+                        {{ t('inherit.withInheritors') }}
+                    </button>
+                    <span class="wacu-chip-gap"></span>
+                    <button
+                        v-for="kind in kinds"
+                        :key="kind.key"
+                        type="button"
+                        class="wacu-chip"
+                        :class="{ 'wacu-chip-on': types.includes(kind.key) }"
+                        :aria-pressed="types.includes(kind.key)"
+                        @click="toggleType(kind.key)"
+                    >
+                        {{ kind.label }}
+                    </button>
+                </div>
+
                 <div class="wacu-list">
                     <button
                         v-for="row in sources"
@@ -128,6 +155,7 @@
             :endpoint="config.routes.pick"
             scope="all"
             :exclude="excluded"
+            :kinds="kinds"
             :per-page="config.picker.perPage"
             :empty-text="t('inherit.nothingToAdd')"
             @close="pickerOpen = false"
@@ -173,6 +201,24 @@ const search = ref('');
 let debounce = null;
 const selectedId = ref(props.ownerId ? Number(props.ownerId) : null);
 const pickerOpen = ref(false);
+const withInheritors = ref(true);
+const types = ref([]);
+
+/** The configured kinds, plus "other" for owners of a type outside the configuration that hold something. */
+const kinds = computed(() => [
+    ...(config.entities || []).map((item) => ({ key: item.key, label: item.label })),
+    { key: 'other', label: t('inherit.otherKinds') },
+]);
+
+function toggleType(key) {
+    types.value = types.value.includes(key) ? types.value.filter((k) => k !== key) : [...types.value, key];
+    loadSources(1);
+}
+
+function toggleInheritors() {
+    withInheritors.value = !withInheritors.value;
+    loadSources(1);
+}
 
 const { owner, list, write, via, load, add, remove, linked, reset } = useInheritance(
     config,
@@ -194,7 +240,13 @@ const excluded = computed(() =>
  * may sit on another page; the right pane loads it by id all the same.
  */
 async function loadSources(page = 1) {
-    const endpoint = query(config.routes.owners, { entity: 'all', search: search.value.trim(), page });
+    const endpoint = query(config.routes.owners, {
+        entity: 'all',
+        search: search.value.trim(),
+        types: types.value.join(','),
+        has: withInheritors.value ? 'inheritors' : '',
+        page,
+    });
     const data = await get(endpoint, { lock: sourcesCard.value, status: config.noticeHost });
 
     if (data === null) return;

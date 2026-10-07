@@ -32,6 +32,13 @@ class OwnersTest extends TestCase
         $this->api('GET', '/owners?entity=role')->assertOk()->assertJsonPath('data.rows.0.title', 'Managers')->assertJsonPath('data.meta.total', 1);
         $this->api('GET', '/owners?search=ann')->assertOk()->assertJsonPath('data.meta.total', 1)->assertJsonPath('data.rows.0.title', 'Ann');
         $this->api('GET', '/owners?entity=nowhere')->assertNotFound();
+
+        // The filters of the inheritance screen: kinds at once, and only rows that have inheritors
+        $this->api('GET', '/owners?types=role,user')->assertOk()->assertJsonPath('data.meta.total', 2);
+        $this->api('GET', '/owners?types=role')->assertOk()->assertJsonPath('data.rows.0.title', 'Managers')->assertJsonPath('data.meta.total', 1);
+        $this->api('GET', '/owners?has=inheritors')->assertOk()->assertJsonPath('data.rows.0.title', 'Managers')->assertJsonPath('data.meta.total', 1);
+        $this->api('GET', '/owners?types=user&has=inheritors')->assertOk()->assertJsonPath('data.meta.total', 0);
+        $this->api('GET', '/owners?types=nowhere')->assertOk()->assertJsonPath('data.meta.total', 3, 'an unknown kind is ignored, not an error');
     }
 
     public function test_the_guest_owner_is_marked(): void

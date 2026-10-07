@@ -27,6 +27,7 @@ class PickerController extends BaseController
         $request->validate([
             'scope'   => ['nullable', 'in:assignable,all,listed'],
             'exclude' => ['nullable', 'string', 'max:512'],
+            'types'   => ['nullable', 'string', 'max:256'],
         ]);
 
         $params = $this->pageParams($request);
@@ -46,6 +47,9 @@ class PickerController extends BaseController
         if ($exclude !== []) {
             $query->whereNotIn('id', $exclude);
         }
+
+        // Kinds to show, as entity keys "role,group"; empty means every kind of the scope
+        $this->ui->narrowOwners($query, array_values(array_filter(array_map('trim', explode(',', (string) $request->input('types', ''))))), []);
 
         return $this->ok('', $this->ui->searchOwners($query, $params['search'], $params['page'], $params['per_page']));
     }

@@ -99,6 +99,9 @@ class InheritTest extends TestCase
         $this->api('GET', '/pick?scope=assignable&search=Role&limit=2')->assertOk()->assertJsonPath('data.meta.total', 3)->assertJsonPath('data.meta.last_page', 2);
         $this->api('GET', '/pick?scope=assignable&exclude='.$ids['role'].',x,0')->assertOk()->assertJsonPath('data.meta.total', 3);
         $this->api('GET', '/pick?scope=all')->assertOk()->assertJsonPath('data.meta.total', 5);
+        $this->api('GET', '/pick?scope=all&types=user')->assertOk()->assertJsonPath('data.meta.total', 1)->assertJsonPath('data.rows.0.title', 'Ann');
+        $roles = $this->api('GET', '/pick?scope=all&types=role')->assertOk()->json('data.meta.total');
+        $this->api('GET', '/pick?scope=all&types=role,user')->assertOk()->assertJsonPath('data.meta.total', $roles + 1);
         $this->api('GET', '/pick?scope=listed')->assertOk()->assertJsonPath('data.meta.total', 5);
     }
 
