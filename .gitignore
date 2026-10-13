@@ -1,0 +1,12 @@
+Thumbs.db
+pint.json
+.DS_Store
+*.log
+.idea
+.phpunit.result.cache
+.phpunit.cache
+/_*
+/composer.lock
+/package-lock.json
+/node_modules
+/vendor
