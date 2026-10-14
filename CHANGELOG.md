@@ -2,6 +2,10 @@
 
 All notable changes to `laravel-access-ui` will be documented in this file
 
+## 3.1.8 - 2026-10-15
+
+- Boot no longer needs the view cache directory
+
 ## 3.1.7 - 2026-10-07
 
 - Inheritance: the sources of rights are filtered by kind

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Wnikk\LaravelAccessUi;
 
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\View\Compilers\BladeCompiler;
 
 class AccessUiServiceProvider extends ServiceProvider
 {
@@ -60,15 +60,23 @@ class AccessUiServiceProvider extends ServiceProvider
      * Two directives, so putting the assignment widget on a page is one line: @accessUiAssets emits
      * the bundle tags, @accessUiWidget the card and its mount call. Both render nothing while the
      * routes are not registered, so a page carrying them stays valid with the panel switched off.
+     *
+     * The directives are added when the Blade compiler is first resolved, not at boot: the Blade facade
+     * would build the compiler right away, and the compiler refuses to exist without a view cache path.
+     * An application whose storage/framework/views is missing would then fail to boot at all, in every
+     * artisan command, with the panel named in the trace. Now it boots, and the first rendered view
+     * reports the missing directory, as it does without the panel.
      */
     protected function registerBladeDirectives(): void
     {
-        Blade::directive('accessUiAssets', static fn (): string => "<?php echo view('accessUi::assets')->render(); ?>");
+        $this->callAfterResolving('blade.compiler', static function (BladeCompiler $blade): void {
+            $blade->directive('accessUiAssets', static fn (): string => "<?php echo view('accessUi::assets')->render(); ?>");
 
-        Blade::directive('accessUiWidget', static function (?string $expression): string {
-            $arguments = trim((string) $expression) ?: '[]';
+            $blade->directive('accessUiWidget', static function (?string $expression): string {
+                $arguments = trim((string) $expression) ?: '[]';
 
-            return "<?php echo view('accessUi::widget', ['options' => (array) ({$arguments})])->render(); ?>";
+                return "<?php echo view('accessUi::widget', ['options' => (array) ({$arguments})])->render(); ?>";
+            });
         });
     }
 
